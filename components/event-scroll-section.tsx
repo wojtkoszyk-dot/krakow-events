@@ -7,8 +7,12 @@ type EventScrollSectionProps = {
   subtitle?: string;
   events: Event[];
   onSelect: (event: Event) => void;
-  emptyMessage?: string;
+  isSaved: (id: string) => boolean;
+  onToggleSave: (id: string) => void;
 };
+
+const SCROLL_ROW =
+  "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 
 export function EventScrollSection({
   id,
@@ -16,7 +20,8 @@ export function EventScrollSection({
   subtitle,
   events,
   onSelect,
-  emptyMessage = "Nothing here yet — check back soon.",
+  isSaved,
+  onToggleSave,
 }: EventScrollSectionProps) {
   if (events.length === 0) return null;
 
@@ -30,21 +35,21 @@ export function EventScrollSection({
           {title}
         </h2>
         {subtitle ? (
-          <p className="mt-0.5 text-xs text-white/40">{subtitle}</p>
+          <p className="mt-0.5 text-xs text-white/45">{subtitle}</p>
         ) : null}
-        <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-1 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] sm:-mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
-          {events.length > 0 ? (
-            events.map((event) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                variant="featured"
-                onSelect={onSelect}
-              />
-            ))
-          ) : (
-            <p className="py-6 text-sm text-white/40">{emptyMessage}</p>
-          )}
+        <div
+          className={`-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-1 snap-x snap-mandatory ${SCROLL_ROW}`}
+        >
+          {events.map((event) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              variant="featured"
+              onSelect={onSelect}
+              isSaved={isSaved(event.id)}
+              onToggleSave={onToggleSave}
+            />
+          ))}
         </div>
       </div>
     </section>

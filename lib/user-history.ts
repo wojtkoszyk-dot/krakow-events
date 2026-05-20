@@ -1,9 +1,12 @@
 import type { EventCategory } from "@/lib/data";
+import type { CategoryChipId } from "@/lib/filters";
 
 const STORAGE_KEY = "krakow-events:user-history";
 
 export type UserHistory = {
   categoryClicks: Partial<Record<EventCategory, number>>;
+  /** UI category chip clicks (Museum, Rave, etc.) for recommendations. */
+  chipClicks: Partial<Record<CategoryChipId, number>>;
   districtClicks: Record<string, number>;
   viewedIds: string[];
   savedIds: string[];
@@ -11,6 +14,7 @@ export type UserHistory = {
 
 const EMPTY_HISTORY: UserHistory = {
   categoryClicks: {},
+  chipClicks: {},
   districtClicks: {},
   viewedIds: [],
   savedIds: [],
@@ -24,6 +28,7 @@ export function loadUserHistory(): UserHistory {
     const parsed = JSON.parse(raw) as Partial<UserHistory>;
     return {
       categoryClicks: parsed.categoryClicks ?? {},
+      chipClicks: parsed.chipClicks ?? {},
       districtClicks: parsed.districtClicks ?? {},
       viewedIds: Array.isArray(parsed.viewedIds) ? parsed.viewedIds : [],
       savedIds: Array.isArray(parsed.savedIds) ? parsed.savedIds : [],
@@ -43,19 +48,23 @@ export function hasUserHistory(history: UserHistory): boolean {
     (sum, n) => sum + (n ?? 0),
     0,
   );
+  const chipTotal = Object.values(history.chipClicks).reduce(
+    (sum, n) => sum + (n ?? 0),
+    0,
+  );
   const districtTotal = Object.values(history.districtClicks).reduce(
     (sum, n) => sum + n,
     0,
   );
   return (
     categoryTotal > 0 ||
+    chipTotal > 0 ||
     districtTotal > 0 ||
     history.viewedIds.length > 0 ||
     history.savedIds.length > 0
   );
 }
 
-/** Districts the user interacts with most — used for Near Me (no GPS). */
 export function getPreferredDistricts(
   history: UserHistory,
   limit = 3,
@@ -63,10 +72,7 @@ export function getPreferredDistricts(
   const ranked = Object.entries(history.districtClicks)
     .sort((a, b) => b[1] - a[1])
     .map(([district]) => district);
-
   if (ranked.length > 0) return ranked.slice(0, limit);
-
-  // Cold start: central Kraków areas most visitors explore first
   return ["Kazimierz", "Old Town"];
 }
 
@@ -79,6 +85,22 @@ export function recordCategoryClick(
     categoryClicks: {
       ...history.categoryClicks,
       [category]: (history.categoryClicks[category] ?? 0) + 1,
+    },
+  };
+  saveUserHistory(next);
+  return next;
+}
+
+export function recordChipClick(
+  history: UserHistory,
+  chip: CategoryChipId,
+): UserHistory {
+  if (chip === "all") return history;
+  const next = {
+    ...history,
+    chipClicks: {
+      ...history.chipClicks,
+      [chip]: (history.chipClicks[chip] ?? 0) + 1,
     },
   };
   saveUserHistory(next);
@@ -102,21 +124,15 @@ export function recordDistrictClick(
 
 export function recordViewed(history: UserHistory, eventId: string): UserHistory {
   if (history.viewedIds.includes(eventId)) return history;
-  const next = {
-    ...history,
-    viewedIds: [...history.viewedIds, eventId],
-  };
+  const next = { ...history, viewedIds: [...history.viewedIds, eventId] };
   saveUserHistory(next);
   return next;
 }
 
 export function toggleSaved(history: UserHistory, eventId: string): UserHistory {
   const saved = new Set(history.savedIds);
-  if (saved.has(eventId)) {
-    saved.delete(eventId);
-  } else {
-    saved.add(eventId);
-  }
+  if (saved.has(eventId)) saved.delete(eventId);
+  else saved.add(eventId);
   const next = { ...history, savedIds: [...saved] };
   saveUserHistory(next);
   return next;

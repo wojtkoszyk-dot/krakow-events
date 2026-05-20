@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { EventCategory } from "@/lib/data";
+import type { CategoryChipId } from "@/lib/filters";
 import {
   loadUserHistory,
   recordCategoryClick,
+  recordChipClick,
   recordDistrictClick,
   recordViewed,
   toggleSaved,
@@ -14,6 +16,7 @@ import {
 export function useUserHistory() {
   const [history, setHistory] = useState<UserHistory>({
     categoryClicks: {},
+    chipClicks: {},
     districtClicks: {},
     viewedIds: [],
     savedIds: [],
@@ -27,6 +30,10 @@ export function useUserHistory() {
 
   const trackCategoryClick = useCallback((category: EventCategory) => {
     setHistory((prev) => recordCategoryClick(prev, category));
+  }, []);
+
+  const trackChipClick = useCallback((chip: CategoryChipId) => {
+    setHistory((prev) => recordChipClick(prev, chip));
   }, []);
 
   const trackDistrictClick = useCallback((district: string) => {
@@ -50,6 +57,7 @@ export function useUserHistory() {
     history,
     ready,
     trackCategoryClick,
+    trackChipClick,
     trackDistrictClick,
     trackViewed,
     trackToggleSaved,
