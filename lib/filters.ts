@@ -10,6 +10,20 @@ import {
 export type DateFilter = "today" | "tomorrow" | "weekend";
 export type CategoryFilter = Lowercase<EventCategory>;
 
+const CATEGORY_FROM_FILTER: Record<CategoryFilter, EventCategory> = {
+  music: "Music",
+  techno: "Techno",
+  "stand-up": "Stand-up",
+  art: "Art",
+  food: "Food",
+};
+
+export function categoryFilterToEventCategory(
+  filter: CategoryFilter,
+): EventCategory {
+  return CATEGORY_FROM_FILTER[filter];
+}
+
 export type ActiveFilter =
   | { type: "date"; value: DateFilter }
   | { type: "category"; value: CategoryFilter };

@@ -7,9 +7,16 @@ import type { Event } from "@/lib/data";
 type EventModalProps = {
   event: Event | null;
   onClose: () => void;
+  isSaved?: boolean;
+  onToggleSave?: () => void;
 };
 
-export function EventModal({ event, onClose }: EventModalProps) {
+export function EventModal({
+  event,
+  onClose,
+  isSaved = false,
+  onToggleSave,
+}: EventModalProps) {
   useEffect(() => {
     if (!event) return;
     const prev = document.body.style.overflow;
@@ -86,9 +93,14 @@ export function EventModal({ event, onClose }: EventModalProps) {
 
           <button
             type="button"
-            className="mt-6 h-12 w-full rounded-full bg-white text-sm font-medium tracking-tight text-black transition-opacity hover:opacity-90 active:opacity-80"
+            onClick={onToggleSave}
+            className={`mt-6 h-12 w-full rounded-full text-sm font-medium tracking-tight transition-opacity hover:opacity-90 active:opacity-80 ${
+              isSaved
+                ? "border border-white/20 bg-white/10 text-white"
+                : "bg-white text-black"
+            }`}
           >
-            Save event
+            {isSaved ? "Saved" : "Save event"}
           </button>
         </div>
       </div>

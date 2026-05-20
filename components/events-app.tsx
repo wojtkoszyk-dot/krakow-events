@@ -4,10 +4,18 @@ import { useCallback, useMemo, useState } from "react";
 import { EventCard } from "@/components/event-card";
 import { EventModal } from "@/components/event-modal";
 import { SiteHeader } from "@/components/site-header";
+import { useUserHistory } from "@/hooks/use-user-history";
 import { FILTER_CHIPS, getEvents, type Event } from "@/lib/data";
 import type { ActiveFilter } from "@/lib/filters";
-import { filterEvents } from "@/lib/filters";
+import {
+  categoryFilterToEventCategory,
+  filterEvents,
+} from "@/lib/filters";
 import { getTonightEvents } from "@/lib/events";
+import {
+  getPickedForYou,
+  isPersonalizedPicks,
+} from "@/lib/recommendations";
 
 function filtersEqual(a: ActiveFilter | null, b: ActiveFilter): boolean {
   if (!a) return false;
@@ -18,8 +26,21 @@ export function EventsApp() {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<ActiveFilter | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const {
+    history,
+    ready,
+    trackCategoryClick,
+    trackViewed,
+    trackToggleSaved,
+    isSaved,
+  } = useUserHistory();
 
   const allEvents = useMemo(() => getEvents(), []);
+  const pickedEvents = useMemo(() => {
+    if (!ready) return [];
+    return getPickedForYou(allEvents, history);
+  }, [allEvents, history, ready]);
+  const pickedIsPersonalized = ready && isPersonalizedPicks(history);
   const trendingEvents = useMemo(
     () => allEvents.filter((e) => e.trending),
     [allEvents],
@@ -33,15 +54,27 @@ export function EventsApp() {
     [allEvents, search, activeFilter],
   );
 
-  const handleFilterClick = useCallback((filter: ActiveFilter) => {
-    setActiveFilter((current) =>
-      filtersEqual(current, filter) ? null : filter,
-    );
-  }, []);
+  const handleFilterClick = useCallback(
+    (filter: ActiveFilter) => {
+      setActiveFilter((current) => {
+        const next = filtersEqual(current, filter) ? null : filter;
+        if (next?.type === "category") {
+          trackCategoryClick(categoryFilterToEventCategory(next.value));
+        }
+        return next;
+      });
+    },
+    [trackCategoryClick],
+  );
 
-  const handleSelect = useCallback((event: Event) => {
-    setSelectedEvent(event);
-  }, []);
+  const handleSelect = useCallback(
+    (event: Event) => {
+      trackViewed(event.id);
+      trackCategoryClick(event.category);
+      setSelectedEvent(event);
+    },
+    [trackViewed, trackCategoryClick],
+  );
 
   const uniqueVenues = new Set(allEvents.map((e) => e.venue)).size;
 
@@ -128,6 +161,35 @@ export function EventsApp() {
           </div>
         </section>
 
+        {pickedEvents.length > 0 && !search && !activeFilter ? (
+          <section
+            className="mt-8 px-4 sm:px-6 lg:px-8"
+            aria-labelledby="picked-heading"
+          >
+            <div className="mx-auto max-w-6xl">
+              <p className="text-[10px] font-medium uppercase tracking-[0.28em] text-white/40">
+                {pickedIsPersonalized ? "Your taste" : "Popular now"}
+              </p>
+              <h2
+                id="picked-heading"
+                className="mt-1 mb-4 text-lg font-semibold tracking-tight text-white sm:text-xl"
+              >
+                Picked for you
+              </h2>
+              <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] sm:-mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
+                {pickedEvents.map((event) => (
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    variant="featured"
+                    onSelect={handleSelect}
+                  />
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
+
         {trendingEvents.length > 0 && !search && !activeFilter ? (
           <section className="mt-8 px-4 sm:px-6 lg:px-8" aria-labelledby="trending-heading">
             <div className="mx-auto max-w-6xl">
@@ -208,7 +270,16 @@ export function EventsApp() {
         </div>
       </footer>
 
-      <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
+      <EventModal
+        event={selectedEvent}
+        onClose={() => setSelectedEvent(null)}
+        isSaved={selectedEvent ? isSaved(selectedEvent.id) : false}
+        onToggleSave={
+          selectedEvent
+            ? () => trackToggleSaved(selectedEvent.id)
+            : undefined
+        }
+      />
     </div>
   );
 }
