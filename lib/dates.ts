@@ -1,3 +1,5 @@
+import type { Event } from "@/lib/data";
+
 const KRAKOW_TZ = "Europe/Warsaw";
 
 export function getKrakowTodayISO(): string {
@@ -40,7 +42,7 @@ export function getTomorrowISO(today = getKrakowTodayISO()): string {
   return addDaysISO(today, 1);
 }
 
-/** Saturday and Sunday ISO dates for the week containing `today` */
+/** Saturday and Sunday ISO dates for the week containing `today`. */
 export function getWeekendISO(today = getKrakowTodayISO()): string[] {
   const [y, m, d] = today.split("-").map(Number);
   const date = new Date(y, m - 1, d);
@@ -68,4 +70,19 @@ export function isEventOnWeekend(
   weekendDays: string[],
 ): boolean {
   return weekendDays.some((day) => isEventOnDate(startsOn, day, endsOn));
+}
+
+/** Past = fully ended before today (running exhibitions with endsOn >= today still count). */
+export function isPastEvent(event: Event, today = getKrakowTodayISO()): boolean {
+  if (event.endsOn) {
+    return event.endsOn < today;
+  }
+  return event.startsOn < today;
+}
+
+export function filterUpcomingEvents(
+  events: Event[],
+  today = getKrakowTodayISO(),
+): Event[] {
+  return events.filter((event) => !isPastEvent(event, today));
 }

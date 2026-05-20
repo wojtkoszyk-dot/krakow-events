@@ -213,12 +213,12 @@ function buildEvents(): Event[] {
     {
       id: "13",
       dayOffset: 3,
-      title: "Forum: Sunday Market Brunch",
+      title: "Forum: Sunday Market",
       time: "11:00",
       venue: "Forum Przestrzenie",
       district: "Podgórze",
       category: "Food",
-      price: "Free entry",
+      price: "Free",
       description:
         "Riverside food market with local bakers, natural wine, and DJ sets from noon. Bring cash.",
       imageUrl:
@@ -339,6 +339,20 @@ function buildEvents(): Event[] {
         "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&q=80",
     },
     {
+      id: "23",
+      dayOffset: 2,
+      title: "Planty: Free Walking Tour",
+      time: "10:00",
+      venue: "Rynek Główny",
+      district: "Old Town",
+      category: "Art",
+      price: "Free",
+      description:
+        "Volunteer-led walk around the Old Town and Planty Park — tips welcome, no booking required.",
+      imageUrl:
+        "https://images.unsplash.com/photo-1555990798-7f1b07c90683?w=800&q=80",
+    },
+    {
       id: "22",
       dayOffset: 11,
       title: "Komedialnia: Improv Battle",
@@ -374,42 +388,3 @@ function buildEvents(): Event[] {
 export function getEvents(): Event[] {
   return buildEvents();
 }
-
-export const FILTER_CHIPS = [
-  { id: "today", label: "Today", filter: { type: "date" as const, value: "today" as const } },
-  {
-    id: "tomorrow",
-    label: "Tomorrow",
-    filter: { type: "date" as const, value: "tomorrow" as const },
-  },
-  {
-    id: "weekend",
-    label: "Weekend",
-    filter: { type: "date" as const, value: "weekend" as const },
-  },
-  {
-    id: "music",
-    label: "Music",
-    filter: { type: "category" as const, value: "music" as const },
-  },
-  {
-    id: "techno",
-    label: "Techno",
-    filter: { type: "category" as const, value: "techno" as const },
-  },
-  {
-    id: "standup",
-    label: "Stand-up",
-    filter: { type: "category" as const, value: "stand-up" as const },
-  },
-  {
-    id: "art",
-    label: "Art",
-    filter: { type: "category" as const, value: "art" as const },
-  },
-  {
-    id: "food",
-    label: "Food",
-    filter: { type: "category" as const, value: "food" as const },
-  },
-] as const;

@@ -3,24 +3,28 @@
 import { useCallback, useMemo, useState } from "react";
 import { EventCard } from "@/components/event-card";
 import { EventModal } from "@/components/event-modal";
+import { EventScrollSection } from "@/components/event-scroll-section";
 import { SiteHeader } from "@/components/site-header";
 import { useUserHistory } from "@/hooks/use-user-history";
-import { FILTER_CHIPS, getEvents, type Event } from "@/lib/data";
-import type { ActiveFilter } from "@/lib/filters";
+import { getEvents, type Event } from "@/lib/data";
 import {
-  categoryFilterToEventCategory,
   filterEvents,
+  filtersEqual,
+  QUICK_FILTER_CHIPS,
+  type ActiveFilter,
 } from "@/lib/filters";
-import { getTonightEvents } from "@/lib/events";
 import {
   getPickedForYou,
   isPersonalizedPicks,
 } from "@/lib/recommendations";
+import {
+  getHappeningThisWeekend,
+  getHappeningToday,
+  getHappeningTomorrow,
+  getTrendingInKrakow,
+} from "@/lib/sections";
 
-function filtersEqual(a: ActiveFilter | null, b: ActiveFilter): boolean {
-  if (!a) return false;
-  return a.type === b.type && a.value === b.value;
-}
+const SCROLL_ROW = "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 
 export function EventsApp() {
   const [search, setSearch] = useState("");
@@ -30,79 +34,78 @@ export function EventsApp() {
     history,
     ready,
     trackCategoryClick,
+    trackDistrictClick,
     trackViewed,
     trackToggleSaved,
     isSaved,
   } = useUserHistory();
 
   const allEvents = useMemo(() => getEvents(), []);
+
   const pickedEvents = useMemo(() => {
     if (!ready) return [];
     return getPickedForYou(allEvents, history);
   }, [allEvents, history, ready]);
+
   const pickedIsPersonalized = ready && isPersonalizedPicks(history);
+
+  const todayEvents = useMemo(() => getHappeningToday(allEvents), [allEvents]);
+  const tomorrowEvents = useMemo(
+    () => getHappeningTomorrow(allEvents),
+    [allEvents],
+  );
+  const weekendEvents = useMemo(
+    () => getHappeningThisWeekend(allEvents),
+    [allEvents],
+  );
   const trendingEvents = useMemo(
-    () => allEvents.filter((e) => e.trending),
+    () => getTrendingInKrakow(allEvents),
     [allEvents],
-  );
-  const tonightEvents = useMemo(
-    () => getTonightEvents(undefined, allEvents),
-    [allEvents],
-  );
-  const filteredEvents = useMemo(
-    () => filterEvents(allEvents, { search, activeFilter }),
-    [allEvents, search, activeFilter],
   );
 
-  const handleFilterClick = useCallback(
-    (filter: ActiveFilter) => {
-      setActiveFilter((current) => {
-        const next = filtersEqual(current, filter) ? null : filter;
-        if (next?.type === "category") {
-          trackCategoryClick(categoryFilterToEventCategory(next.value));
-        }
-        return next;
-      });
-    },
-    [trackCategoryClick],
+  const filteredEvents = useMemo(
+    () =>
+      filterEvents(allEvents, {
+        search,
+        activeFilter,
+        history,
+      }),
+    [allEvents, search, activeFilter, history],
   );
+
+  const showDiscoverySections = !search.trim();
+
+  const handleFilterClick = useCallback((filter: ActiveFilter) => {
+    setActiveFilter((current) =>
+      filtersEqual(current, filter) ? null : filter,
+    );
+  }, []);
 
   const handleSelect = useCallback(
     (event: Event) => {
       trackViewed(event.id);
       trackCategoryClick(event.category);
+      trackDistrictClick(event.district);
       setSelectedEvent(event);
     },
-    [trackViewed, trackCategoryClick],
+    [trackViewed, trackCategoryClick, trackDistrictClick],
   );
-
-  const uniqueVenues = new Set(allEvents.map((e) => e.venue)).size;
 
   return (
     <div className="min-h-full bg-black text-white">
-      <SiteHeader onSearchFocus={() => document.getElementById("event-search")?.focus()} />
+      <SiteHeader
+        onSearchFocus={() => document.getElementById("event-search")?.focus()}
+      />
 
-      <main>
-        <section className="relative overflow-hidden px-4 pb-6 pt-8 sm:px-6 sm:pb-8 sm:pt-12 lg:px-8">
-          <div
-            className="pointer-events-none absolute -top-24 left-1/2 h-[420px] w-[min(100%,520px)] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(120,120,255,0.14),transparent_70%)]"
-            aria-hidden
-          />
-          <div className="relative mx-auto max-w-6xl">
-            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.28em] text-white/45">
-              Discover · Tonight & beyond
-            </p>
-            <h1 className="max-w-[14ch] text-[2.75rem] font-semibold leading-[1.05] tracking-[-0.03em] text-white sm:text-6xl sm:leading-[1.02] lg:text-7xl">
-              What&apos;s on in{" "}
-              <span className="bg-gradient-to-r from-white via-white to-white/50 bg-clip-text text-transparent">
-                Kraków
-              </span>
-            </h1>
-            <p className="mt-5 max-w-md text-base leading-relaxed text-white/55 sm:text-lg">
-              Curated gigs, clubs, art, and culture — filter, search, and explore.
+      <main className="pb-8">
+        {/* 1. Search + 2. Quick filters — sticky so discovery stays one thumb-reach away */}
+        <section className="sticky top-14 z-40 border-b border-white/[0.06] bg-black/95 px-4 pb-3 pt-4 backdrop-blur-xl sm:top-16 sm:px-6 sm:pt-5 lg:px-8">
+          <div className="mx-auto max-w-6xl">
+            <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.28em] text-white/45">
+              Kraków events
             </p>
 
-            <label className="relative mt-8 block sm:mt-10 sm:max-w-md">
+            <label className="relative block">
               <span className="sr-only">Search events</span>
               <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/35">
                 <SearchIcon />
@@ -120,33 +123,25 @@ export function EventsApp() {
                   type="button"
                   aria-label="Clear search"
                   onClick={() => setSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-xs text-white/50 hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-white/50 hover:text-white"
                 >
                   Clear
                 </button>
               ) : null}
             </label>
 
-            <dl className="mt-8 grid grid-cols-3 gap-4 border-t border-white/[0.06] pt-6 sm:max-w-lg">
-              <Stat label="Tonight" value={tonightEvents.length} />
-              <Stat label="Listed" value={allEvents.length} />
-              <Stat label="Venues" value={uniqueVenues} />
-            </dl>
-          </div>
-        </section>
-
-        <section className="sticky top-14 z-40 border-b border-white/[0.06] bg-black/90 px-4 py-3 backdrop-blur-xl sm:top-16 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-6xl">
-            <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] sm:-mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
-              {FILTER_CHIPS.map((chip) => {
+            <ul
+              className={`-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-0.5 snap-x ${SCROLL_ROW}`}
+            >
+              {QUICK_FILTER_CHIPS.map((chip) => {
                 const isActive = filtersEqual(activeFilter, chip.filter);
                 return (
-                  <li key={chip.id} className="shrink-0">
+                  <li key={chip.id} className="shrink-0 snap-start">
                     <button
                       type="button"
                       onClick={() => handleFilterClick(chip.filter)}
                       aria-pressed={isActive}
-                      className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                      className={`whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${
                         isActive
                           ? "border-white bg-white text-black"
                           : "border-white/[0.08] bg-white/[0.03] text-white/85 hover:border-white/15 hover:bg-white/[0.06]"
@@ -161,66 +156,82 @@ export function EventsApp() {
           </div>
         </section>
 
-        {pickedEvents.length > 0 && !search && !activeFilter ? (
-          <section
-            className="mt-8 px-4 sm:px-6 lg:px-8"
-            aria-labelledby="picked-heading"
-          >
-            <div className="mx-auto max-w-6xl">
-              <p className="text-[10px] font-medium uppercase tracking-[0.28em] text-white/40">
-                {pickedIsPersonalized ? "Your taste" : "Popular now"}
-              </p>
-              <h2
-                id="picked-heading"
-                className="mt-1 mb-4 text-lg font-semibold tracking-tight text-white sm:text-xl"
+        {showDiscoverySections ? (
+          <>
+            {/* 3. Picked for you */}
+            {pickedEvents.length > 0 ? (
+              <section
+                className="mt-5 px-4 sm:px-6 lg:px-8"
+                aria-labelledby="picked-heading"
               >
-                Picked for you
-              </h2>
-              <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] sm:-mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
-                {pickedEvents.map((event) => (
-                  <EventCard
-                    key={event.id}
-                    event={event}
-                    variant="featured"
-                    onSelect={handleSelect}
-                  />
-                ))}
-              </div>
-            </div>
-          </section>
+                <div className="mx-auto max-w-6xl">
+                  <h2
+                    id="picked-heading"
+                    className="text-base font-semibold tracking-tight text-white sm:text-lg"
+                  >
+                    Picked for you
+                  </h2>
+                  <p className="mt-1 text-xs text-white/45">
+                    Based on what you view and save
+                    {pickedIsPersonalized ? "" : " · popular picks for now"}
+                  </p>
+                  <div
+                    className={`-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-1 snap-x snap-mandatory ${SCROLL_ROW}`}
+                  >
+                    {pickedEvents.map((event) => (
+                      <EventCard
+                        key={event.id}
+                        event={event}
+                        variant="featured"
+                        onSelect={handleSelect}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </section>
+            ) : null}
+
+            {/* 4. Smart date sections */}
+            <EventScrollSection
+              id="today-heading"
+              title="Happening Today"
+              events={todayEvents}
+              onSelect={handleSelect}
+            />
+            <EventScrollSection
+              id="tomorrow-heading"
+              title="Tomorrow"
+              events={tomorrowEvents}
+              onSelect={handleSelect}
+            />
+            <EventScrollSection
+              id="weekend-heading"
+              title="This Weekend"
+              events={weekendEvents}
+              onSelect={handleSelect}
+            />
+            <EventScrollSection
+              id="trending-heading"
+              title="Trending in Kraków"
+              events={trendingEvents}
+              onSelect={handleSelect}
+            />
+          </>
         ) : null}
 
-        {trendingEvents.length > 0 && !search && !activeFilter ? (
-          <section className="mt-8 px-4 sm:px-6 lg:px-8" aria-labelledby="trending-heading">
-            <div className="mx-auto max-w-6xl">
-              <h2
-                id="trending-heading"
-                className="mb-4 text-lg font-semibold tracking-tight text-white sm:text-xl"
-              >
-                Trending
-              </h2>
-              <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] sm:-mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
-                {trendingEvents.map((event) => (
-                  <EventCard
-                    key={event.id}
-                    event={event}
-                    variant="featured"
-                    onSelect={handleSelect}
-                  />
-                ))}
-              </div>
-            </div>
-          </section>
-        ) : null}
-
-        <section className="mt-8 px-4 pb-24 sm:mt-10 sm:px-6 sm:pb-28 lg:px-8">
+        {/* 5. Full list — respects search + quick filters */}
+        <section className="mt-8 px-4 pb-24 sm:px-6 sm:pb-28 lg:px-8">
           <div className="mx-auto max-w-6xl">
             <div className="mb-4 flex items-end justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold tracking-tight text-white sm:text-xl">
-                  {activeFilter || search ? "Results" : "All events"}
+                <h2 className="text-base font-semibold tracking-tight text-white sm:text-lg">
+                  {search.trim()
+                    ? "Search results"
+                    : activeFilter
+                      ? "Filtered events"
+                      : "All upcoming events"}
                 </h2>
-                <p className="mt-0.5 text-sm text-white/45">
+                <p className="mt-0.5 text-xs text-white/45 sm:text-sm">
                   {filteredEvents.length}{" "}
                   {filteredEvents.length === 1 ? "event" : "events"}
                 </p>
@@ -253,7 +264,7 @@ export function EventsApp() {
               </ul>
             ) : (
               <p className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-5 py-12 text-center text-sm text-white/45">
-                No events match your search. Try another filter or clear the
+                No upcoming events match. Try another filter or clear your
                 search.
               </p>
             )}
@@ -262,11 +273,10 @@ export function EventsApp() {
       </main>
 
       <footer className="border-t border-white/[0.06] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto max-w-6xl">
           <p className="text-xs text-white/35">
             © {new Date().getFullYear()} kraków.events — for discovery only
           </p>
-          <p className="text-xs text-white/35">22 events · no database yet</p>
         </div>
       </footer>
 
@@ -280,19 +290,6 @@ export function EventsApp() {
             : undefined
         }
       />
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div>
-      <dt className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/40">
-        {label}
-      </dt>
-      <dd className="mt-1 text-2xl font-semibold tracking-tight text-white">
-        {value}
-      </dd>
     </div>
   );
 }

@@ -3,16 +3,15 @@ import type { EventCategory } from "@/lib/data";
 const STORAGE_KEY = "krakow-events:user-history";
 
 export type UserHistory = {
-  /** How often the user clicked each category (filters or opened events). */
   categoryClicks: Partial<Record<EventCategory, number>>;
-  /** Event ids opened in the detail modal. */
+  districtClicks: Record<string, number>;
   viewedIds: string[];
-  /** Event ids the user explicitly saved. */
   savedIds: string[];
 };
 
 const EMPTY_HISTORY: UserHistory = {
   categoryClicks: {},
+  districtClicks: {},
   viewedIds: [],
   savedIds: [],
 };
@@ -22,9 +21,10 @@ export function loadUserHistory(): UserHistory {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { ...EMPTY_HISTORY };
-    const parsed = JSON.parse(raw) as UserHistory;
+    const parsed = JSON.parse(raw) as Partial<UserHistory>;
     return {
       categoryClicks: parsed.categoryClicks ?? {},
+      districtClicks: parsed.districtClicks ?? {},
       viewedIds: Array.isArray(parsed.viewedIds) ? parsed.viewedIds : [],
       savedIds: Array.isArray(parsed.savedIds) ? parsed.savedIds : [],
     };
@@ -43,11 +43,31 @@ export function hasUserHistory(history: UserHistory): boolean {
     (sum, n) => sum + (n ?? 0),
     0,
   );
+  const districtTotal = Object.values(history.districtClicks).reduce(
+    (sum, n) => sum + n,
+    0,
+  );
   return (
     categoryTotal > 0 ||
+    districtTotal > 0 ||
     history.viewedIds.length > 0 ||
     history.savedIds.length > 0
   );
+}
+
+/** Districts the user interacts with most — used for Near Me (no GPS). */
+export function getPreferredDistricts(
+  history: UserHistory,
+  limit = 3,
+): string[] {
+  const ranked = Object.entries(history.districtClicks)
+    .sort((a, b) => b[1] - a[1])
+    .map(([district]) => district);
+
+  if (ranked.length > 0) return ranked.slice(0, limit);
+
+  // Cold start: central Kraków areas most visitors explore first
+  return ["Kazimierz", "Old Town"];
 }
 
 export function recordCategoryClick(
@@ -59,6 +79,21 @@ export function recordCategoryClick(
     categoryClicks: {
       ...history.categoryClicks,
       [category]: (history.categoryClicks[category] ?? 0) + 1,
+    },
+  };
+  saveUserHistory(next);
+  return next;
+}
+
+export function recordDistrictClick(
+  history: UserHistory,
+  district: string,
+): UserHistory {
+  const next = {
+    ...history,
+    districtClicks: {
+      ...history.districtClicks,
+      [district]: (history.districtClicks[district] ?? 0) + 1,
     },
   };
   saveUserHistory(next);

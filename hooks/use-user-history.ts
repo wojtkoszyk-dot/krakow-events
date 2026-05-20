@@ -5,6 +5,7 @@ import type { EventCategory } from "@/lib/data";
 import {
   loadUserHistory,
   recordCategoryClick,
+  recordDistrictClick,
   recordViewed,
   toggleSaved,
   type UserHistory,
@@ -13,6 +14,7 @@ import {
 export function useUserHistory() {
   const [history, setHistory] = useState<UserHistory>({
     categoryClicks: {},
+    districtClicks: {},
     viewedIds: [],
     savedIds: [],
   });
@@ -25,6 +27,10 @@ export function useUserHistory() {
 
   const trackCategoryClick = useCallback((category: EventCategory) => {
     setHistory((prev) => recordCategoryClick(prev, category));
+  }, []);
+
+  const trackDistrictClick = useCallback((district: string) => {
+    setHistory((prev) => recordDistrictClick(prev, district));
   }, []);
 
   const trackViewed = useCallback((eventId: string) => {
@@ -44,6 +50,7 @@ export function useUserHistory() {
     history,
     ready,
     trackCategoryClick,
+    trackDistrictClick,
     trackViewed,
     trackToggleSaved,
     isSaved,
