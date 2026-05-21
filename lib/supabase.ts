@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { formatDisplayDate } from "@/lib/dates";
+import { getSupabaseKey, getSupabaseUrl } from "@/utils/supabase/env";
 import type { Event } from "@/lib/data";
 import type { EventCategory } from "@/lib/taxonomy";
 import { isEventCategory } from "@/lib/taxonomy";
@@ -29,6 +30,9 @@ export type EventRow = {
 export type EventCandidateRow = EventRow & {
   status: EventCandidateStatus;
   source_url: string | null;
+  source_name: string | null;
+  raw_data: Record<string, unknown> | null;
+  quality_score: number;
   event_id: string | null;
   approved_at: string | null;
   rejected_at: string | null;
@@ -46,21 +50,10 @@ export type EventCandidate = Event & {
 
 let supabase: SupabaseClient | null = null;
 
-function getEnv(name: "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY"): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing environment variable: ${name}`);
-  }
-  return value;
-}
-
-/** Browser-safe anon client (singleton). */
+/** Legacy singleton client (`@supabase/supabase-js`). Prefer `@/utils/supabase/*` for SSR. */
 export function createSupabaseClient(): SupabaseClient {
   if (!supabase) {
-    supabase = createClient(
-      getEnv("NEXT_PUBLIC_SUPABASE_URL"),
-      getEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
-    );
+    supabase = createClient(getSupabaseUrl(), getSupabaseKey());
   }
   return supabase;
 }

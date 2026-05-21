@@ -38,6 +38,9 @@ create table if not exists public.event_candidates (
   image_url text not null default '',
   trending boolean not null default false,
   source_url text,
+  source_name text,
+  raw_data jsonb,
+  quality_score integer not null default 50,
   event_id uuid references public.events (id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -45,8 +48,20 @@ create table if not exists public.event_candidates (
   rejected_at timestamptz
 );
 
+create table if not exists public.event_sources (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  url text not null,
+  enabled boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create index if not exists events_starts_on_idx on public.events (starts_on);
 create index if not exists event_candidates_status_idx on public.event_candidates (status);
+create index if not exists event_candidates_title_source_url_idx
+  on public.event_candidates (title, source_url);
+create index if not exists event_sources_enabled_idx on public.event_sources (enabled);
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -66,4 +81,9 @@ for each row execute function public.set_updated_at();
 drop trigger if exists event_candidates_set_updated_at on public.event_candidates;
 create trigger event_candidates_set_updated_at
 before update on public.event_candidates
+for each row execute function public.set_updated_at();
+
+drop trigger if exists event_sources_set_updated_at on public.event_sources;
+create trigger event_sources_set_updated_at
+before update on public.event_sources
 for each row execute function public.set_updated_at();
