@@ -86,3 +86,81 @@ export function filterUpcomingEvents(
 ): Event[] {
   return events.filter((event) => !isPastEvent(event, today));
 }
+
+export function compareISO(a: string, b: string): number {
+  return a.localeCompare(b);
+}
+
+/** Event overlaps [rangeFrom, rangeTo] inclusive (ISO dates). */
+export function isEventInDateRange(
+  startsOn: string,
+  endsOn: string | undefined,
+  rangeFrom: string,
+  rangeTo: string,
+): boolean {
+  const eventEnd = endsOn ?? startsOn;
+  return startsOn <= rangeTo && eventEnd >= rangeFrom;
+}
+
+export function formatShortDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: KRAKOW_TZ,
+    day: "numeric",
+    month: "short",
+  }).format(date);
+}
+
+/** Next N days from `startISO` (inclusive), for lightweight picker grids. */
+export function getDayRangeISO(
+  startISO: string,
+  count: number,
+): string[] {
+  return Array.from({ length: count }, (_, i) => addDaysISO(startISO, i));
+}
+
+export function parseISO(iso: string): { year: number; month: number; day: number } {
+  const [year, month, day] = iso.split("-").map(Number);
+  return { year, month, day };
+}
+
+export function toISO(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+export function formatMonthYear(year: number, month: number): string {
+  const date = new Date(year, month - 1, 1);
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: KRAKOW_TZ,
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+/** Monday-based offset for the first day of a month grid. */
+export function getMonthLeadingBlanks(year: number, month: number): number {
+  const dow = new Date(year, month - 1, 1).getDay();
+  return (dow + 6) % 7;
+}
+
+export function getMonthDayISOList(year: number, month: number): string[] {
+  const daysInMonth = new Date(year, month, 0).getDate();
+  return Array.from({ length: daysInMonth }, (_, i) =>
+    toISO(year, month, i + 1),
+  );
+}
+
+export function isWeekendISO(iso: string): boolean {
+  const { year, month, day } = parseISO(iso);
+  const dow = new Date(year, month - 1, day).getDay();
+  return dow === 0 || dow === 6;
+}
+
+export function addMonths(year: number, month: number, delta: number): {
+  year: number;
+  month: number;
+} {
+  const date = new Date(year, month - 1 + delta, 1);
+  return { year: date.getFullYear(), month: date.getMonth() + 1 };
+}

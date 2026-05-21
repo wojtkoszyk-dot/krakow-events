@@ -1,9 +1,10 @@
 import type { Event } from "@/lib/data";
 import { filterUpcomingEvents, getKrakowTodayISO } from "@/lib/dates";
-import type { CategoryChipId } from "@/lib/filters";
+import type { EventCategory } from "@/lib/taxonomy";
 import { hasUserHistory, type UserHistory } from "@/lib/user-history";
 
 const PICKED_LIMIT = 5;
+const SURPRISE_POOL = 12;
 
 function daysUntilStart(event: Event, today: string): number {
   const [ty, tm, td] = today.split("-").map(Number);
@@ -13,11 +14,11 @@ function daysUntilStart(event: Event, today: string): number {
   return Math.round((startMs - todayMs) / (1000 * 60 * 60 * 24));
 }
 
-function topCategories(history: UserHistory): Event["category"][] {
+function topCategories(history: UserHistory): EventCategory[] {
   return Object.entries(history.categoryClicks)
     .filter(([, n]) => (n ?? 0) > 0)
     .sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))
-    .map(([cat]) => cat as Event["category"]);
+    .map(([cat]) => cat as EventCategory);
 }
 
 function topDistricts(history: UserHistory): string[] {
@@ -26,41 +27,47 @@ function topDistricts(history: UserHistory): string[] {
     .map(([d]) => d);
 }
 
-function topChips(history: UserHistory): CategoryChipId[] {
-  return Object.entries(history.chipClicks)
-    .filter(([, n]) => (n ?? 0) > 0)
-    .sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))
-    .map(([chip]) => chip as CategoryChipId);
-}
-
-/** Rough boost when user often taps a chip that relates to this event. */
-function chipAffinity(event: Event, chips: CategoryChipId[]): number {
+/** Tags from events the user viewed — soft taste signal. */
+function viewedTagAffinity(event: Event, allEvents: Event[], history: UserHistory): number {
+  const byId = new Map(allEvents.map((e) => [e.id, e]));
+  const tagCounts = new Map<string, number>();
+  for (const id of history.viewedIds) {
+    const e = byId.get(id);
+    e?.tags.forEach((tag) => tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1));
+  }
   let score = 0;
-  for (const chip of chips) {
-    if (chip === "techno" && event.category === "Techno") score += 2;
-    if (chip === "concert" && event.category === "Music") score += 2;
-    if (chip === "standup" && event.category === "Stand-up") score += 2;
-    if (chip === "art" && event.category === "Art") score += 2;
-    if (chip === "food" && event.category === "Food") score += 2;
-    if (chip === "museum" && event.category === "Art") score += 1;
-    if (chip === "rave" && event.category === "Techno") score += 2;
+  for (const tag of event.tags) {
+    score += Math.min(tagCounts.get(tag) ?? 0, 3);
   }
   return score;
 }
 
-/**
- * Picked for you — localStorage only.
- *
- * No history → trending upcoming events (max 5).
- *
- * With history → score upcoming events:
- *   +3  event category you clicked often
- *   +3  district you clicked often
- *   +2  chip affinity (Museum, Rave, etc.)
- *   +2  starts within 3 days (+1 if today/tomorrow)
- *   +4  saved by you
- *   −50 viewed already (deprioritized)
- */
+function scoreEvent(
+  event: Event,
+  history: UserHistory,
+  allEvents: Event[],
+  today: string,
+): { event: Event; score: number; isViewed: boolean } {
+  const viewedSet = new Set(history.viewedIds);
+  const savedSet = new Set(history.savedIds);
+  const preferredCategories = topCategories(history);
+  const preferredDistricts = topDistricts(history);
+  const isViewed = viewedSet.has(event.id);
+
+  let score = 1;
+  if (savedSet.has(event.id)) score += 4;
+  if (preferredCategories.includes(event.category)) score += 3;
+  if (preferredDistricts.includes(event.district)) score += 3;
+  score += viewedTagAffinity(event, allEvents, history);
+
+  const days = daysUntilStart(event, today);
+  if (days >= 0 && days <= 3) score += 2;
+  if (days === 0 || days === 1) score += 2;
+  if (isViewed) score -= 50;
+
+  return { event, score, isViewed };
+}
+
 export function getPickedForYou(
   events: Event[],
   history: UserHistory,
@@ -72,28 +79,9 @@ export function getPickedForYou(
     return getTrendingFallback(upcoming);
   }
 
-  const viewedSet = new Set(history.viewedIds);
-  const savedSet = new Set(history.savedIds);
-  const preferredCategories = topCategories(history);
-  const preferredDistricts = topDistricts(history);
-  const preferredChips = topChips(history);
-
-  const scored = upcoming.map((event) => {
-    let score = 0;
-    const isViewed = viewedSet.has(event.id);
-
-    if (savedSet.has(event.id)) score += 4;
-    if (preferredCategories.includes(event.category)) score += 3;
-    if (preferredDistricts.includes(event.district)) score += 3;
-    score += chipAffinity(event, preferredChips);
-
-    const days = daysUntilStart(event, today);
-    if (days >= 0 && days <= 3) score += 2;
-    if (days === 0 || days === 1) score += 1;
-    if (isViewed) score -= 50;
-
-    return { event, score, isViewed };
-  });
+  const scored = upcoming.map((item) =>
+    scoreEvent(item, history, events, today),
+  );
 
   scored.sort((a, b) => {
     if (a.isViewed !== b.isViewed) return a.isViewed ? 1 : -1;
@@ -113,12 +101,42 @@ export function isPersonalizedPicks(history: UserHistory): boolean {
   return hasUserHistory(history);
 }
 
-/** One random upcoming event for "I don't know where to go". */
-export function pickRandomEvent(
+export function pickSurpriseEvent(
   events: Event[],
+  history: UserHistory,
   today = getKrakowTodayISO(),
 ): Event | null {
   const upcoming = filterUpcomingEvents(events, today);
   if (upcoming.length === 0) return null;
-  return upcoming[Math.floor(Math.random() * upcoming.length)];
+
+  if (!hasUserHistory(history)) {
+    const pool = getTrendingFallback(upcoming);
+    const pick = pool.length > 0 ? pool : upcoming;
+    return pick[Math.floor(Math.random() * pick.length)];
+  }
+
+  const scored = upcoming
+    .map((item) => scoreEvent(item, history, events, today))
+    .sort((a, b) => {
+      if (a.isViewed !== b.isViewed) return a.isViewed ? 1 : -1;
+      return b.score - a.score;
+    });
+
+  const candidates = scored.filter((s) => s.score > 0).slice(0, SURPRISE_POOL);
+  const pool =
+    candidates.length > 0
+      ? candidates
+      : scored.filter((s) => !s.isViewed).slice(0, SURPRISE_POOL);
+
+  if (pool.length === 0) {
+    return upcoming[Math.floor(Math.random() * upcoming.length)];
+  }
+
+  const totalWeight = pool.reduce((sum, c) => sum + Math.max(c.score, 1), 0);
+  let roll = Math.random() * totalWeight;
+  for (const c of pool) {
+    roll -= Math.max(c.score, 1);
+    if (roll <= 0) return c.event;
+  }
+  return pool[0].event;
 }

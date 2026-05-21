@@ -1,12 +1,14 @@
-import type { EventCategory } from "@/lib/data";
-import type { CategoryChipId } from "@/lib/filters";
+import type { EventCategory } from "@/lib/taxonomy";
+import type { CategoryFilterId } from "@/lib/taxonomy";
 
 const STORAGE_KEY = "krakow-events:user-history";
 
 export type UserHistory = {
   categoryClicks: Partial<Record<EventCategory, number>>;
-  /** UI category chip clicks (Museum, Rave, etc.) for recommendations. */
-  chipClicks: Partial<Record<CategoryChipId, number>>;
+  /** Filter chip clicks (same ids as categories). */
+  filterClicks?: Partial<Record<CategoryFilterId, number>>;
+  /** @deprecated Migrated to filterClicks */
+  chipClicks?: Partial<Record<CategoryFilterId, number>>;
   districtClicks: Record<string, number>;
   viewedIds: string[];
   savedIds: string[];
@@ -14,7 +16,7 @@ export type UserHistory = {
 
 const EMPTY_HISTORY: UserHistory = {
   categoryClicks: {},
-  chipClicks: {},
+  filterClicks: {},
   districtClicks: {},
   viewedIds: [],
   savedIds: [],
@@ -25,10 +27,12 @@ export function loadUserHistory(): UserHistory {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { ...EMPTY_HISTORY };
-    const parsed = JSON.parse(raw) as Partial<UserHistory>;
+    const parsed = JSON.parse(raw) as Partial<UserHistory> & {
+      chipClicks?: Record<string, number>;
+    };
     return {
       categoryClicks: parsed.categoryClicks ?? {},
-      chipClicks: parsed.chipClicks ?? {},
+      filterClicks: parsed.filterClicks ?? parsed.chipClicks ?? {},
       districtClicks: parsed.districtClicks ?? {},
       viewedIds: Array.isArray(parsed.viewedIds) ? parsed.viewedIds : [],
       savedIds: Array.isArray(parsed.savedIds) ? parsed.savedIds : [],
@@ -48,7 +52,7 @@ export function hasUserHistory(history: UserHistory): boolean {
     (sum, n) => sum + (n ?? 0),
     0,
   );
-  const chipTotal = Object.values(history.chipClicks).reduce(
+  const filterTotal = Object.values(history.filterClicks ?? {}).reduce(
     (sum, n) => sum + (n ?? 0),
     0,
   );
@@ -58,7 +62,7 @@ export function hasUserHistory(history: UserHistory): boolean {
   );
   return (
     categoryTotal > 0 ||
-    chipTotal > 0 ||
+    filterTotal > 0 ||
     districtTotal > 0 ||
     history.viewedIds.length > 0 ||
     history.savedIds.length > 0
@@ -91,21 +95,26 @@ export function recordCategoryClick(
   return next;
 }
 
-export function recordChipClick(
+export function recordFilterClick(
   history: UserHistory,
-  chip: CategoryChipId,
+  category: CategoryFilterId,
 ): UserHistory {
-  if (chip === "all") return history;
   const next = {
     ...history,
-    chipClicks: {
-      ...history.chipClicks,
-      [chip]: (history.chipClicks[chip] ?? 0) + 1,
+    filterClicks: {
+      ...history.filterClicks,
+      [category]: (history.filterClicks?.[category] ?? 0) + 1,
     },
   };
   saveUserHistory(next);
   return next;
 }
+
+/** @deprecated Use recordFilterClick */
+export const recordChipClick = recordFilterClick;
+
+/** @deprecated Use CategoryFilterId */
+export type CategoryChipId = CategoryFilterId;
 
 export function recordDistrictClick(
   history: UserHistory,

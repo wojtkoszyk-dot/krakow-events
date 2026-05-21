@@ -3,13 +3,9 @@ import {
   formatDisplayDate,
   getKrakowTodayISO,
 } from "@/lib/dates";
+import type { EventCategory } from "@/lib/taxonomy";
 
-export type EventCategory =
-  | "Music"
-  | "Techno"
-  | "Stand-up"
-  | "Art"
-  | "Food";
+export type { EventCategory };
 
 export type Event = {
   id: string;
@@ -21,6 +17,7 @@ export type Event = {
   venue: string;
   district: string;
   category: EventCategory;
+  tags: string[];
   price: string;
   description: string;
   imageUrl: string;
@@ -43,7 +40,8 @@ function buildEvents(): Event[] {
       time: "22:30",
       venue: "Szpitalna 1",
       district: "Kazimierz",
-      category: "Techno",
+      category: "nightlife",
+      tags: ["techno", "rave", "electronic", "dj", "warehouse"],
       price: "45 PLN",
       description:
         "Raw warehouse techno in a former hospital wing. Limited capacity, no phones on the dancefloor after midnight.",
@@ -58,7 +56,8 @@ function buildEvents(): Event[] {
       time: "20:00",
       venue: "ICE Kraków",
       district: "Grzegórzki",
-      category: "Stand-up",
+      category: "comedy",
+      tags: ["stand-up", "english", "live"],
       price: "60 PLN",
       description:
         "English-language stand-up with visiting comics from the UK and Poland’s expat scene. Bar from 18:30.",
@@ -73,7 +72,8 @@ function buildEvents(): Event[] {
       time: "12:00",
       venue: "Galeria Starmach",
       district: "Zabłocie",
-      category: "Art",
+      category: "culture",
+      tags: ["exhibition", "gallery", "art"],
       price: "25 PLN",
       description:
         "Paintings and works on paper from the Polish post-war avant-garde — the Kraków Group in dialogue.",
@@ -88,7 +88,8 @@ function buildEvents(): Event[] {
       time: "11:00",
       venue: "MOCAK",
       district: "Zabłocie",
-      category: "Art",
+      category: "culture",
+      tags: ["museum", "exhibition", "art", "new media"],
       price: "32 PLN",
       description:
         "Survey of Polish new media art — video, installation, and interactive works across four galleries.",
@@ -103,7 +104,8 @@ function buildEvents(): Event[] {
       time: "19:00",
       venue: "Restauracja Hawelka",
       district: "Old Town",
-      category: "Food",
+      category: "food-drink",
+      tags: ["restaurant", "polish", "live music", "date-night"],
       price: "from 85 PLN",
       description:
         "Classic Polish tasting menu in a historic cellar — pierogi, duck, and live folk music on weekends.",
@@ -117,7 +119,8 @@ function buildEvents(): Event[] {
       time: "19:00",
       venue: "NOSPR",
       district: "Grzegórzki",
-      category: "Music",
+      category: "music",
+      tags: ["concert", "classical", "live music"],
       price: "90 PLN",
       description:
         "Philharmonic orchestra performs Brahms’ Fourth Symphony and Dvořák’s Cello Concerto.",
@@ -132,7 +135,8 @@ function buildEvents(): Event[] {
       time: "23:00",
       venue: "Prozak 2.0",
       district: "Old Town",
-      category: "Techno",
+      category: "nightlife",
+      tags: ["techno", "electronic", "dj", "club"],
       price: "40 PLN",
       description:
         "Two-floor techno with local residents warming up for the weekend. Industrial room and main hall.",
@@ -146,7 +150,8 @@ function buildEvents(): Event[] {
       time: "18:00",
       venue: "Szara Ges w Kuchni",
       district: "Old Town",
-      category: "Food",
+      category: "food-drink",
+      tags: ["beer", "restaurant", "cocktails", "date-night"],
       price: "from 55 PLN",
       description:
         "Michelin-recognized kitchen meets Polish craft beers — small plates and seasonal menu on the Main Square.",
@@ -160,7 +165,8 @@ function buildEvents(): Event[] {
       time: "23:00",
       venue: "Prozak 2.0",
       district: "Old Town",
-      category: "Techno",
+      category: "nightlife",
+      tags: ["techno", "rave", "electronic", "dj"],
       price: "50 PLN",
       description:
         "All-night techno — secret guest from Berlin, late kitchen, two dancefloors until sunrise.",
@@ -175,7 +181,8 @@ function buildEvents(): Event[] {
       time: "19:30",
       venue: "Teatr Variété",
       district: "Old Town",
-      category: "Stand-up",
+      category: "comedy",
+      tags: ["cabaret", "live", "polish"],
       price: "70 PLN",
       description:
         "Kraków cabaret institution — political satire, sketches, and live piano. Dress smart-casual.",
@@ -189,7 +196,8 @@ function buildEvents(): Event[] {
       time: "18:00",
       venue: "Hype Park",
       district: "Grzegórzki",
-      category: "Music",
+      category: "music",
+      tags: ["indie", "electronic", "live music", "outdoor", "open air"],
       price: "80 PLN",
       description:
         "Outdoor indie-electronic in a converted steelworks yard — food trucks and Vistula sunsets.",
@@ -203,7 +211,8 @@ function buildEvents(): Event[] {
       time: "19:30",
       venue: "Stara Zajezdnia",
       district: "Kazimierz",
-      category: "Music",
+      category: "music",
+      tags: ["jazz", "live music"],
       price: "55 PLN",
       description:
         "Sunday jazz session in a tram depot turned brewery — local quartet and guest vocalists.",
@@ -217,7 +226,8 @@ function buildEvents(): Event[] {
       time: "11:00",
       venue: "Forum Przestrzenie",
       district: "Podgórze",
-      category: "Food",
+      category: "food-drink",
+      tags: ["market", "free", "outdoor", "dj"],
       price: "Free",
       description:
         "Riverside food market with local bakers, natural wine, and DJ sets from noon. Bring cash.",
@@ -231,7 +241,8 @@ function buildEvents(): Event[] {
       time: "20:00",
       venue: "Tauron Arena Kraków",
       district: "Czyżyny",
-      category: "Music",
+      category: "music",
+      tags: ["concert", "live music", "indie"],
       price: "from 180 PLN",
       description:
         "Psychedelic soul trio on their European tour — hypnotic grooves and a visually rich live show.",
@@ -246,7 +257,8 @@ function buildEvents(): Event[] {
       time: "22:00",
       venue: "Klub RE",
       district: "Kazimierz",
-      category: "Techno",
+      category: "nightlife",
+      tags: ["techno", "electronic", "dj", "club"],
       price: "35 PLN",
       description:
         "Weekly techno night in Kazimierz — rotating Polish and EU selectors, smoke and strobes.",
@@ -260,7 +272,8 @@ function buildEvents(): Event[] {
       time: "20:30",
       venue: "Pod Baranami Cinema",
       district: "Old Town",
-      category: "Stand-up",
+      category: "comedy",
+      tags: ["stand-up", "open mic", "student"],
       price: "30 PLN",
       description:
         "Polish-language open mic — new material from Kraków comics, two-drink minimum in the bar.",
@@ -275,7 +288,8 @@ function buildEvents(): Event[] {
       time: "10:00",
       venue: "National Museum",
       district: "Old Town",
-      category: "Art",
+      category: "culture",
+      tags: ["museum", "exhibition", "family"],
       price: "28 PLN",
       description:
         "Working reconstructions of Leonardo’s inventions — family-friendly, audio guides in EN/PL.",
@@ -289,7 +303,8 @@ function buildEvents(): Event[] {
       time: "18:30",
       venue: "Piekarzy i Wędliny",
       district: "Kazimierz",
-      category: "Food",
+      category: "food-drink",
+      tags: ["wine", "cocktails", "date-night"],
       price: "from 120 PLN",
       description:
         "Natural wine pairings with charcuterie boards — sommelier on hand, reservations recommended.",
@@ -303,7 +318,8 @@ function buildEvents(): Event[] {
       time: "18:00",
       venue: "Bunkier Sztuki",
       district: "Old Town",
-      category: "Art",
+      category: "culture",
+      tags: ["gallery", "exhibition", "art", "lecture"],
       price: "18 PLN",
       description:
         "Curator talk on Central European video art — exhibition access included, Q&A in English.",
@@ -317,7 +333,8 @@ function buildEvents(): Event[] {
       time: "21:00",
       venue: "Studio Koncertowe",
       district: "Podgórze",
-      category: "Music",
+      category: "music",
+      tags: ["indie", "live music", "concert"],
       price: "65 PLN",
       description:
         "Triple bill of Polish indie bands — early bird tickets include a craft beer at the bar.",
@@ -331,7 +348,8 @@ function buildEvents(): Event[] {
       time: "23:30",
       venue: "Shine Club",
       district: "Kazimierz",
-      category: "Techno",
+      category: "nightlife",
+      tags: ["dance", "electronic", "dj", "club"],
       price: "40 PLN",
       description:
         "Deep house and minimal all night — intimate basement club, cash bar only.",
@@ -345,7 +363,8 @@ function buildEvents(): Event[] {
       time: "10:00",
       venue: "Rynek Główny",
       district: "Old Town",
-      category: "Art",
+      category: "community",
+      tags: ["free", "outdoor", "walking tour"],
       price: "Free",
       description:
         "Volunteer-led walk around the Old Town and Planty Park — tips welcome, no booking required.",
@@ -359,7 +378,8 @@ function buildEvents(): Event[] {
       time: "20:00",
       venue: "Komedialnia",
       district: "Podgórze",
-      category: "Stand-up",
+      category: "comedy",
+      tags: ["improv", "stand-up", "live"],
       price: "45 PLN",
       description:
         "Two teams improvise scenes from audience suggestions — fast, loud, and fully in Polish.",

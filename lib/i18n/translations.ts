@@ -1,0 +1,231 @@
+import type { EventCategory } from "@/lib/taxonomy";
+
+export type Locale = "en" | "pl";
+
+export const LOCALES: Locale[] = ["en", "pl"];
+
+const en = {
+  brand: "kraków.events",
+  search: {
+    placeholder: "Venue, district, vibe…",
+    close: "Close search",
+    label: "Search events",
+  },
+  date: {
+    all: "All",
+    today: "Today",
+    tomorrow: "Tomorrow",
+    weekend: "Weekend",
+    custom: "Custom",
+    when: "When",
+    prevMonth: "Previous month",
+    nextMonth: "Next month",
+    selectDates: "Select dates",
+    clear: "Clear",
+    apply: "Apply",
+  },
+  category: {
+    music: "Music",
+    nightlife: "Nightlife",
+    culture: "Culture",
+    comedy: "Comedy",
+    "food-drink": "Food & Drink",
+    outdoor: "Outdoor",
+    community: "Community",
+    sports: "Sports",
+    family: "Family",
+    other: "Other",
+    filterLabel: "Category",
+  },
+  feed: {
+    allUpcoming: "All upcoming",
+    today: "Today",
+    tomorrow: "Tomorrow",
+    thisWeekend: "This weekend",
+    customDates: "Custom dates",
+    events: "events",
+    event: "event",
+    empty: "Nothing on for this night yet. Try another day or clear filters.",
+    emptySearchTitle: "No events found",
+    emptySearchHint: "Try a venue, district, or a different vibe.",
+    emptyFilterTitle: "Nothing in this category",
+    emptyFilterHint: "Try Culture or Food & Drink.",
+    emptyDateTitle: "Nothing on for these dates",
+    emptyDateHint: "Shift the day or browse all upcoming.",
+    emptyDateWeekendTitle: "No nightlife events this weekend.",
+    emptyDateWeekendHint: "Try Culture or Food & Drink.",
+    emptyDefaultTitle: "No events found",
+    emptyDefaultHint: "Check back soon — Kraków moves fast.",
+  },
+  picks: {
+    title: "Tonight Picks",
+    curated: "Curated from your taste",
+    trending: "Popular right now",
+  },
+  surprise: {
+    title: "Surprise me",
+    subtitle: "Pick my night",
+  },
+  filters: {
+    clearRefinements: "Clear search & filters",
+    freeOnly: "Free only",
+  },
+  saved: {
+    title: "Saved",
+    count: "{n} events on your map",
+    countOne: "{n} event on your map",
+    empty: "Save events to build your personal nightlife map.",
+    emptyTitle: "Nothing saved yet",
+    hint: "Tap the heart on any event you want to keep.",
+    close: "Close saved",
+    remove: "Remove from saved",
+    save: "Save event",
+    savedBtn: "Saved",
+  },
+  modal: {
+    close: "Close",
+    venue: "Venue",
+    district: "District",
+    price: "Price",
+    surpriseLabel: "Tonight's pick for you",
+    tags: "Tags",
+  },
+  header: {
+    search: "Search events",
+    saved: "Saved events",
+    language: "Language",
+  },
+  profile: {
+    guest: "Guest",
+    subtitle: "Your Kraków taste · no account yet",
+    saved: "Saved",
+    viewed: "Viewed",
+    districts: "Districts",
+    favoriteCategories: "Favorite categories",
+    viewedDistricts: "Viewed districts",
+    recentlyViewed: "Recently viewed",
+    empty: "Browse events — we'll learn what you like.",
+    views: "views",
+    view: "view",
+  },
+};
+
+export type TranslationMessages = typeof en;
+
+const pl: TranslationMessages = {
+  brand: "kraków.events",
+  search: {
+    placeholder: "Miejsce, dzielnica, klimat…",
+    close: "Zamknij wyszukiwanie",
+    label: "Szukaj wydarzeń",
+  },
+  date: {
+    all: "Wszystkie",
+    today: "Dziś",
+    tomorrow: "Jutro",
+    weekend: "Weekend",
+    custom: "Własne",
+    when: "Kiedy",
+    prevMonth: "Poprzedni miesiąc",
+    nextMonth: "Następny miesiąc",
+    selectDates: "Wybierz daty",
+    clear: "Wyczyść",
+    apply: "Zastosuj",
+  },
+  category: {
+    music: "Muzyka",
+    nightlife: "Nightlife",
+    culture: "Kultura",
+    comedy: "Komedia",
+    "food-drink": "Jedzenie i drinki",
+    outdoor: "Na zewnątrz",
+    community: "Społeczność",
+    sports: "Sport",
+    family: "Rodzina",
+    other: "Inne",
+    filterLabel: "Kategoria",
+  },
+  feed: {
+    allUpcoming: "Wszystkie nadchodzące",
+    today: "Dziś",
+    tomorrow: "Jutro",
+    thisWeekend: "Ten weekend",
+    customDates: "Wybrane daty",
+    events: "wydarzeń",
+    event: "wydarzenie",
+    empty: "Nic na ten wieczór. Spróbuj innego dnia lub wyczyść filtry.",
+    emptySearchTitle: "Nic nie znaleziono",
+    emptySearchHint: "Spróbuj innej dzielnicy, miejsca lub klimatu.",
+    emptyFilterTitle: "Brak w tej kategorii",
+    emptyFilterHint: "Spróbuj Kultura lub Jedzenie i drinki.",
+    emptyDateTitle: "Nic w te dni",
+    emptyDateHint: "Zmień datę lub zobacz wszystkie wydarzenia.",
+    emptyDateWeekendTitle: "Ten weekend bez imprez.",
+    emptyDateWeekendHint: "Spróbuj Kultura lub Jedzenie i drinki.",
+    emptyDefaultTitle: "Nic nie znaleziono",
+    emptyDefaultHint: "Wróć wkrótce — w Krakowie zawsze coś się dzieje.",
+  },
+  picks: {
+    title: "Propozycje na dziś",
+    curated: "Dopasowane do Twojego gustu",
+    trending: "Popularne teraz",
+  },
+  surprise: {
+    title: "Zaskocz mnie",
+    subtitle: "Wybierz mój wieczór",
+  },
+  filters: {
+    clearRefinements: "Wyczyść wyszukiwanie i filtry",
+    freeOnly: "Tylko darmowe",
+  },
+  saved: {
+    title: "Zapisane",
+    count: "{n} wydarzeń na mapie",
+    countOne: "{n} wydarzenie na mapie",
+    empty: "Zapisuj wydarzenia, by zbudować swoją mapę nocnego życia.",
+    emptyTitle: "Nic jeszcze nie zapisane",
+    hint: "Kliknij serce przy wydarzeniu, które chcesz zachować.",
+    close: "Zamknij zapisane",
+    remove: "Usuń z zapisanych",
+    save: "Zapisz wydarzenie",
+    savedBtn: "Zapisane",
+  },
+  modal: {
+    close: "Zamknij",
+    venue: "Miejsce",
+    district: "Dzielnica",
+    price: "Cena",
+    surpriseLabel: "Propozycja na dziś",
+    tags: "Tagi",
+  },
+  header: {
+    search: "Szukaj wydarzeń",
+    saved: "Zapisane wydarzenia",
+    language: "Język",
+  },
+  profile: {
+    guest: "Gość",
+    subtitle: "Twój gust w Krakowie · bez konta",
+    saved: "Zapisane",
+    viewed: "Obejrzane",
+    districts: "Dzielnice",
+    favoriteCategories: "Ulubione kategorie",
+    viewedDistricts: "Oglądane dzielnice",
+    recentlyViewed: "Ostatnio oglądane",
+    empty: "Przeglądaj wydarzenia — poznamy Twój gust.",
+    views: "wyświetleń",
+    view: "wyświetlenie",
+  },
+};
+
+export const translations: Record<Locale, TranslationMessages> = { en, pl };
+
+/** Dot-path keys, e.g. `search.placeholder` */
+export type TranslationKey = string;
+
+export function getCategoryLabel(
+  category: EventCategory,
+  locale: Locale,
+): string {
+  return translations[locale].category[category];
+}
