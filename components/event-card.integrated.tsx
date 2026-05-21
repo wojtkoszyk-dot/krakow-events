@@ -27,7 +27,7 @@ export function EventCard({
 
   if (isFeatured && isPicked) {
     return (
-      <article className="card-rail-pick group relative w-[196px] shrink-0 snap-start snap-always sm:w-[212px]">
+      <article className="card-rail-pick group relative w-[196px] shrink-0 snap-start snap-always sm:w-[212px] md:w-[200px] lg:w-[228px] xl:w-[240px]">
         <div className="card-rail-pick-inner relative overflow-hidden rounded-xl bg-zinc-950 ring-1 ring-white/[0.08] transition-[box-shadow,transform] duration-300 ease-out group-hover:-translate-y-0.5 group-hover:ring-white/14 group-hover:shadow-[0_12px_36px_-16px_rgba(0,0,0,0.9)]">
           <button
             type="button"
@@ -35,7 +35,7 @@ export function EventCard({
             className="block w-full text-left active:scale-[0.98]"
           >
             <div className="relative aspect-[3/2] overflow-hidden bg-zinc-900">
-              <EventImage event={event} fill sizes="212px" featured />
+              <EventImage event={event} fill sizes="(max-width: 768px) 212px, 240px" featured />
               <div className="card-scrim-rail absolute inset-0" aria-hidden />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/25 opacity-80" />
 
@@ -109,10 +109,10 @@ export function EventCard({
       <button
         type="button"
         onClick={() => onSelect(event)}
-        className="group/card card-feed flex w-full gap-3 overflow-hidden rounded-[1.125rem] bg-white/[0.025] p-3 pr-11 text-left ring-1 ring-white/[0.06] transition-[background,box-shadow,transform,ring-color] duration-300 ease-out hover:bg-white/[0.045] hover:ring-white/12 active:scale-[0.995] sm:gap-3.5 sm:p-3.5 sm:pr-12"
+        className="group/card card-feed flex h-full min-h-[88px] w-full gap-3 overflow-hidden rounded-[1.125rem] bg-white/[0.025] p-3 pr-11 text-left ring-1 ring-white/[0.06] transition-[background,box-shadow,transform,ring-color] duration-300 ease-out hover:bg-white/[0.045] hover:ring-white/12 active:scale-[0.995] sm:min-h-[92px] sm:gap-3.5 sm:p-3.5 sm:pr-12 lg:min-h-[100px] lg:p-4 lg:pr-14"
       >
-        <div className="relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-[0.875rem] bg-zinc-900 ring-1 ring-white/[0.08] sm:h-[92px] sm:w-[92px]">
-          <EventImage event={event} fill sizes="92px" />
+        <div className="relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-[0.875rem] bg-zinc-900 ring-1 ring-white/[0.08] sm:h-[92px] sm:w-[92px] lg:h-[100px] lg:w-[112px]">
+          <EventImage event={event} fill sizes="(max-width: 1024px) 92px, 112px" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
           <time className="absolute bottom-1.5 left-1.5 rounded-md bg-white/95 px-1.5 py-0.5 text-[9px] font-bold tabular-nums text-black shadow-sm">
             {event.time}

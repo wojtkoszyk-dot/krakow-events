@@ -20,7 +20,7 @@ export function SiteHeader({
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/[0.05] bg-black/80 backdrop-blur-xl backdrop-saturate-150">
-      <div className="mx-auto flex h-9 max-w-6xl items-center justify-between gap-2 px-4 sm:h-10 sm:px-6 lg:px-8">
+      <div className="app-container flex h-9 items-center justify-between gap-2 sm:h-10">
         <a href="/" className="flex min-w-0 items-center gap-2 transition-opacity hover:opacity-90">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] text-[9px] font-semibold tracking-widest text-white/90">
             K

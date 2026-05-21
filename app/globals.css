@@ -70,6 +70,68 @@ body {
   display: none;
 }
 
+/* ——— App layout (mobile full-width → tablet 900 → desktop 1280–1320) ——— */
+.app-shell {
+  min-height: 100%;
+  background: #000;
+}
+
+@media (min-width: 768px) {
+  .app-shell {
+    background:
+      radial-gradient(
+        ellipse 100% 60% at 50% -30%,
+        rgb(24 24 28 / 0.45),
+        transparent 50%
+      ),
+      #000;
+  }
+}
+
+.app-container {
+  width: 100%;
+  max-width: 100%;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 768px) {
+  .app-container {
+    max-width: 900px;
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-container {
+    max-width: 1280px;
+    padding-inline: 2rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .app-container {
+    max-width: 1320px;
+  }
+}
+
+/* Main feed: single column mobile, 2-column desktop */
+.feed-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.625rem;
+}
+
+@media (min-width: 1024px) {
+  .feed-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+}
+
 /* Horizontal rail with edge fades */
 .scroll-rail {
   position: relative;
@@ -95,6 +157,72 @@ body {
 .scroll-rail::after {
   right: 0;
   background: linear-gradient(to left, rgb(0 0 0 / 1), transparent);
+}
+
+@media (min-width: 768px) {
+  .scroll-rail::before,
+  .scroll-rail::after {
+    width: 3rem;
+  }
+}
+
+/* Mobile: rail bleeds to screen edges; desktop: stays in container */
+.scroll-rail-bleed {
+  margin-inline: -1rem;
+}
+
+@media (min-width: 768px) {
+  .scroll-rail-bleed {
+    margin-inline: 0;
+  }
+}
+
+.scroll-rail-track {
+  display: flex;
+  gap: 0.625rem;
+  overflow-x: auto;
+  padding-bottom: 0.125rem;
+  scroll-snap-type: x proximity;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scroll-rail-track::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .scroll-rail-track {
+    gap: 0.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .scroll-rail-track {
+    gap: 0.875rem;
+  }
+}
+
+.scroll-rail-scroll-hint {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .scroll-rail-scroll-hint {
+    display: block;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    z-index: 3;
+    transform: translateY(-50%);
+    pointer-events: none;
+    padding-right: 0.25rem;
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / 0.22);
+  }
 }
 
 /* ——— Filter dock ——— */

@@ -190,7 +190,7 @@ function EventsAppInner() {
   }, [filters, t]);
 
   return (
-    <div className="min-h-full bg-black text-white">
+    <div className="app-shell text-white">
       <SiteHeader
         searchOpen={searchOpen}
         onSearchToggle={() => {
@@ -210,7 +210,7 @@ function EventsAppInner() {
 
       <main className={!refined ? "pb-[5.5rem] sm:pb-6" : "pb-5"}>
         <section className="filter-dock sticky top-9 z-40 overflow-visible border-b border-white/[0.05] bg-black/88 backdrop-blur-2xl sm:top-10">
-          <div className="mx-auto max-w-6xl space-y-1.5 px-4 pb-2 pt-1.5 sm:px-6 sm:pb-2 sm:pt-2 lg:px-8">
+          <div className="app-container space-y-1.5 pb-2 pt-1.5 sm:pb-2 sm:pt-2">
             {searchOpen ? (
               <label className="search-field search-field--open animate-fade-in-up">
                 <span className="sr-only">{t("search.label")}</span>
@@ -254,7 +254,7 @@ function EventsAppInner() {
             />
 
             <ul
-              className="hide-scrollbar -mx-4 flex gap-1.5 overflow-x-auto scroll-touch scroll-pl-4 px-4 pb-px"
+              className="chip-scroll hide-scrollbar -mx-4 flex gap-1.5 overflow-x-auto scroll-touch px-4 pb-px md:mx-0 md:px-0"
               aria-label={t("category.filterLabel")}
             >
               {CATEGORY_FILTER_IDS.map((categoryId) => {
@@ -286,7 +286,7 @@ function EventsAppInner() {
           </div>
         </section>
 
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="app-container">
           {!refined && ready && pickedEvents.length > 0 ? (
             <section
               className="animate-section-in pt-2.5 sm:pt-3"
@@ -304,8 +304,11 @@ function EventsAppInner() {
                   </p>
                 </div>
               </div>
-              <div className="scroll-rail -mx-4 mt-2 sm:-mx-6 lg:-mx-8">
-                <div className="hide-scrollbar flex gap-2.5 overflow-x-auto scroll-touch scroll-pl-4 px-4 pb-0.5 snap-x snap-proximity sm:gap-3 sm:px-6 lg:px-8">
+              <div className="scroll-rail scroll-rail-bleed mt-2">
+                <span className="scroll-rail-scroll-hint" aria-hidden>
+                  →
+                </span>
+                <div className="scroll-rail-track scroll-touch scroll-pl-4 px-4 md:px-0">
                   {pickedEvents.map((event) => (
                     <EventCard
                       key={event.id}
@@ -316,10 +319,7 @@ function EventsAppInner() {
                       onToggleSave={toggleSave}
                     />
                   ))}
-                  <div
-                    className="w-[calc(1rem-4px)] shrink-0 snap-end sm:w-6"
-                    aria-hidden
-                  />
+                  <div className="w-3 shrink-0 snap-end md:w-1" aria-hidden />
                 </div>
               </div>
             </section>
@@ -341,9 +341,9 @@ function EventsAppInner() {
             </div>
 
             {feedEvents.length > 0 ? (
-              <ul className="mt-2.5 flex flex-col gap-2 sm:mt-3 sm:gap-2.5">
+              <ul className="feed-grid">
                 {feedEvents.map((event) => (
-                  <li key={event.id}>
+                  <li key={event.id} className="min-w-0">
                     <EventCard
                       event={event}
                       variant="grid"
@@ -355,7 +355,7 @@ function EventsAppInner() {
                 ))}
               </ul>
             ) : (
-              <div className="mt-3 py-2">
+              <div className="mt-3 py-2 lg:col-span-2">
                 <EmptyState
                   icon={emptyFeed.icon}
                   title={emptyFeed.title}
