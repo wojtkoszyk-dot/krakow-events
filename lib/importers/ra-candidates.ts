@@ -1,16 +1,41 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { EventCandidateDbRow } from "@/lib/db/event-records";
-import { buildEventCandidateInsert } from "@/lib/importers/candidate-insert";
-import type { KarnetImportedItem } from "@/lib/importers/karnet-types";
+import {
+  buildEventCandidateInsert,
+  mergeTags,
+} from "@/lib/importers/candidate-insert";
+import type { RaImportedItem } from "@/lib/importers/ra-types";
 
 export type { EventCandidateDbRow };
 
-function toCandidateInsert(item: KarnetImportedItem) {
+function toCandidateInsert(item: RaImportedItem) {
+  const tags = mergeTags(item.tags, item.artists);
+
+  const rawData: Record<string, unknown> = {
+    source: "resident-advisor",
+    raEventId: item.raEventId,
+    artists: item.artists,
+    genres: item.genres,
+    ticketUrl: item.ticketUrl,
+    time: item.time,
+    rawText: item.rawText,
+    parsed: {
+      title: item.title,
+      venue: item.venue,
+      district: item.district,
+      startDate: item.startDate,
+      endDate: item.endDate,
+      category: item.category,
+      price: item.price,
+      imageUrl: item.imageUrl,
+    },
+  };
+
   return buildEventCandidateInsert({
     title: item.title,
-    description: item.description || item.rawText,
+    description: item.description,
     category: item.category,
-    tags: item.tags,
+    tags,
     venue: item.venue,
     district: item.district,
     address: item.address,
@@ -21,22 +46,22 @@ function toCandidateInsert(item: KarnetImportedItem) {
     sourceName: item.sourceName,
     sourceUrl: item.sourceUrl,
     qualityScore: item.qualityScore,
-    rawData: { source: "karnet", ...item },
+    rawData,
     time: item.time,
   });
 }
 
-export type KarnetCandidateImportResult = {
+export type RaCandidateImportResult = {
   parsed: number;
   inserted: number;
   skipped: number;
   candidates: EventCandidateDbRow[];
 };
 
-export async function saveKarnetCandidates(
+export async function saveRaCandidates(
   supabase: SupabaseClient,
-  items: KarnetImportedItem[],
-): Promise<KarnetCandidateImportResult> {
+  items: RaImportedItem[],
+): Promise<RaCandidateImportResult> {
   const candidates: EventCandidateDbRow[] = [];
   let inserted = 0;
   let skipped = 0;

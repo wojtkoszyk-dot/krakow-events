@@ -691,3 +691,226 @@ body {
 .card-rail {
   will-change: transform;
 }
+
+/* ——— Admin moderation (imports queue) ——— */
+.admin-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.admin-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(161 161 170);
+}
+
+.admin-page-title {
+  margin-top: 0.25rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #fafafa;
+}
+
+.admin-page-subtitle {
+  margin-top: 0.35rem;
+  max-width: 36rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: rgb(161 161 170);
+}
+
+.admin-back-link {
+  font-size: 0.8125rem;
+  color: rgb(212 212 216);
+  text-decoration: none;
+  transition: color 0.2s var(--ease-out-expo);
+}
+
+.admin-back-link:hover {
+  color: #fff;
+}
+
+.admin-queue-count {
+  margin-bottom: 0.75rem;
+  font-size: 0.8125rem;
+  color: rgb(161 161 170);
+}
+
+.admin-candidate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.admin-candidate-card {
+  border-radius: 0.875rem;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  background: rgb(9 9 11 / 0.85);
+  padding: 1rem 1.125rem;
+}
+
+.admin-candidate-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.admin-candidate-title {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #fafafa;
+}
+
+.admin-candidate-meta {
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  color: rgb(161 161 170);
+}
+
+.admin-quality-pill {
+  flex-shrink: 0;
+  border-radius: 9999px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: rgb(255 255 255 / 0.04);
+  padding: 0.2rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgb(212 212 216);
+}
+
+.admin-duplicate-warning {
+  margin-top: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgb(234 179 8 / 0.35);
+  background: rgb(234 179 8 / 0.08);
+  padding: 0.5rem 0.625rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: rgb(253 224 71);
+}
+
+.admin-candidate-fields {
+  display: grid;
+  gap: 0.625rem 1rem;
+  margin-top: 0.875rem;
+  font-size: 0.8125rem;
+}
+
+@media (min-width: 640px) {
+  .admin-candidate-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.admin-candidate-fields dt {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(113 113 122);
+}
+
+.admin-candidate-fields dd {
+  margin-top: 0.15rem;
+  color: rgb(228 228 231);
+  word-break: break-word;
+}
+
+.admin-description-preview {
+  line-height: 1.45;
+  color: rgb(161 161 170);
+}
+
+.admin-source-link {
+  color: rgb(212 212 216);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.admin-source-link:hover {
+  color: #fff;
+}
+
+.admin-candidate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.admin-btn {
+  border-radius: 9999px;
+  padding: 0.45rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition:
+    background 0.2s var(--ease-out-expo),
+    border-color 0.2s var(--ease-out-expo),
+    opacity 0.2s var(--ease-out-expo);
+}
+
+.admin-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.admin-btn-approve {
+  border: 1px solid rgb(255 255 255 / 0.14);
+  background: #fafafa;
+  color: #09090b;
+}
+
+.admin-btn-approve:hover:not(:disabled) {
+  background: #fff;
+}
+
+.admin-btn-reject {
+  border: 1px solid rgb(255 255 255 / 0.12);
+  background: transparent;
+  color: rgb(212 212 216);
+}
+
+.admin-btn-reject:hover:not(:disabled) {
+  border-color: rgb(255 255 255 / 0.2);
+  color: #fff;
+}
+
+.admin-empty {
+  border-radius: 0.875rem;
+  border: 1px dashed rgb(255 255 255 / 0.12);
+  padding: 2rem 1.25rem;
+  text-align: center;
+}
+
+.admin-empty-error {
+  border-style: solid;
+  border-color: rgb(239 68 68 / 0.35);
+  background: rgb(239 68 68 / 0.06);
+}
+
+.admin-empty-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #fafafa;
+}
+
+.admin-empty-hint {
+  margin-top: 0.35rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: rgb(161 161 170);
+}

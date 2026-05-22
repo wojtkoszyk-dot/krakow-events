@@ -1,7 +1,9 @@
 import { EventsApp } from "@/components/events-app";
+import { loadPublicEvents } from "@/lib/events-feed";
 
 export const dynamic = "force-dynamic";
 
-export default function Home() {
-  return <EventsApp />;
+export default async function Home() {
+  const events = await loadPublicEvents();
+  return <EventsApp initialEvents={events} />;
 }

@@ -1,14 +1,14 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { saveKarnetCandidates } from "@/lib/importers/karnet-candidates";
-import { importKarnetEvents } from "@/lib/importers/karnet";
+import { saveRaCandidates } from "@/lib/importers/ra-candidates";
+import { importRaEvents } from "@/lib/importers/ra";
 import { createClient } from "@/utils/supabase/server";
 
 export const dynamic = "force-dynamic";
-/** Deep import fetches listing + up to 10 detail pages. */
+/** RA GraphQL listing + up to 10 detail queries. */
 export const maxDuration = 60;
 
-type KarnetImportErrorDebug = {
+type RaImportErrorDebug = {
   message: string;
   name?: string;
   code?: string;
@@ -20,8 +20,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function getErrorDebug(err: unknown): KarnetImportErrorDebug {
-  const debug: KarnetImportErrorDebug = {
+function getErrorDebug(err: unknown): RaImportErrorDebug {
+  const debug: RaImportErrorDebug = {
     message:
       err instanceof Error
         ? err.message
@@ -51,11 +51,10 @@ function getErrorDebug(err: unknown): KarnetImportErrorDebug {
 
 export async function GET() {
   try {
-    // Listing page + one HTTP request per event detail page.
-    const parsedItems = await importKarnetEvents(10);
+    const parsedItems = await importRaEvents(10);
     const supabase = createClient(await cookies());
     const { parsed, inserted, skipped, candidates } =
-      await saveKarnetCandidates(supabase, parsedItems);
+      await saveRaCandidates(supabase, parsedItems);
 
     return NextResponse.json({
       ok: true,
@@ -65,7 +64,7 @@ export async function GET() {
       candidates,
     });
   } catch (err) {
-    console.error("[import-events/karnet]", err);
+    console.error("[import-events/resident-advisor]", err);
     const debug = getErrorDebug(err);
     return NextResponse.json(
       { ok: false, error: debug.message, debug },

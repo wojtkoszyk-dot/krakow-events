@@ -1,11 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { EventCandidateDbRow } from "@/lib/db/event-records";
 import { buildEventCandidateInsert } from "@/lib/importers/candidate-insert";
-import type { KarnetImportedItem } from "@/lib/importers/karnet-types";
+import type { KrakowTravelImportedItem } from "@/lib/importers/krakow-travel-types";
 
 export type { EventCandidateDbRow };
 
-function toCandidateInsert(item: KarnetImportedItem) {
+function toCandidateInsert(item: KrakowTravelImportedItem) {
   return buildEventCandidateInsert({
     title: item.title,
     description: item.description || item.rawText,
@@ -21,22 +21,21 @@ function toCandidateInsert(item: KarnetImportedItem) {
     sourceName: item.sourceName,
     sourceUrl: item.sourceUrl,
     qualityScore: item.qualityScore,
-    rawData: { source: "karnet", ...item },
-    time: item.time,
+    rawData: { source: "krakow-travel", ...item },
   });
 }
 
-export type KarnetCandidateImportResult = {
+export type KrakowTravelCandidateImportResult = {
   parsed: number;
   inserted: number;
   skipped: number;
   candidates: EventCandidateDbRow[];
 };
 
-export async function saveKarnetCandidates(
+export async function saveKrakowTravelCandidates(
   supabase: SupabaseClient,
-  items: KarnetImportedItem[],
-): Promise<KarnetCandidateImportResult> {
+  items: KrakowTravelImportedItem[],
+): Promise<KrakowTravelCandidateImportResult> {
   const candidates: EventCandidateDbRow[] = [];
   let inserted = 0;
   let skipped = 0;

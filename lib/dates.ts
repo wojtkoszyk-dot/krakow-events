@@ -58,6 +58,9 @@ export function isEventOnDate(
   isoDate: string,
   endsOn?: string,
 ): boolean {
+  if (!startsOn?.trim()) {
+    return false;
+  }
   if (endsOn) {
     return startsOn <= isoDate && isoDate <= endsOn;
   }
@@ -77,7 +80,32 @@ export function isPastEvent(event: Event, today = getKrakowTodayISO()): boolean 
   if (event.endsOn) {
     return event.endsOn < today;
   }
+  if (!event.startsOn) {
+    return false;
+  }
   return event.startsOn < today;
+}
+
+/**
+ * Public feed: hide outdated events.
+ * - end_date before today → hidden
+ * - start before today with no end_date → hidden
+ * - missing start_date → kept (sorted last)
+ */
+export function isOutdatedPublicEvent(
+  event: Event,
+  today = getKrakowTodayISO(),
+): boolean {
+  const startsOn = event.startsOn?.trim() || null;
+  const endsOn = event.endsOn?.trim() || null;
+
+  if (endsOn && endsOn < today) {
+    return true;
+  }
+  if (startsOn && startsOn < today && !endsOn) {
+    return true;
+  }
+  return false;
 }
 
 export function filterUpcomingEvents(
@@ -85,6 +113,31 @@ export function filterUpcomingEvents(
   today = getKrakowTodayISO(),
 ): Event[] {
   return events.filter((event) => !isPastEvent(event, today));
+}
+
+export function filterUpcomingPublicEvents(
+  events: Event[],
+  today = getKrakowTodayISO(),
+): Event[] {
+  return events.filter((event) => !isOutdatedPublicEvent(event, today));
+}
+
+/** Compare by start_date ascending; undated events sort after dated ones. */
+export function comparePublicEventDates(a: Event, b: Event): number {
+  const aDate = a.startsOn?.trim() || "";
+  const bDate = b.startsOn?.trim() || "";
+  if (aDate && !bDate) return -1;
+  if (!aDate && bDate) return 1;
+  if (aDate && bDate) {
+    const cmp = aDate.localeCompare(bDate);
+    if (cmp !== 0) return cmp;
+  }
+  return a.title.localeCompare(b.title);
+}
+
+/** Dated events first (ascending), undated events last. */
+export function sortPublicEvents(events: Event[]): Event[] {
+  return [...events].sort(comparePublicEventDates);
 }
 
 export function compareISO(a: string, b: string): number {

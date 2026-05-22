@@ -1,5 +1,10 @@
 import type { Event } from "@/lib/data";
-import { filterUpcomingEvents, getKrakowTodayISO } from "@/lib/dates";
+import {
+  comparePublicEventDates,
+  filterUpcomingEvents,
+  getKrakowTodayISO,
+  sortPublicEvents,
+} from "@/lib/dates";
 import type { EventCategory } from "@/lib/taxonomy";
 import { hasUserHistory, type UserHistory } from "@/lib/user-history";
 
@@ -7,6 +12,9 @@ const PICKED_LIMIT = 5;
 const SURPRISE_POOL = 12;
 
 function daysUntilStart(event: Event, today: string): number {
+  if (!event.startsOn?.trim()) {
+    return Number.MAX_SAFE_INTEGER;
+  }
   const [ty, tm, td] = today.split("-").map(Number);
   const [sy, sm, sd] = event.startsOn.split("-").map(Number);
   const todayMs = Date.UTC(ty, tm - 1, td);
@@ -73,7 +81,7 @@ export function getPickedForYou(
   history: UserHistory,
   today = getKrakowTodayISO(),
 ): Event[] {
-  const upcoming = filterUpcomingEvents(events, today);
+  const upcoming = sortPublicEvents(filterUpcomingEvents(events, today));
 
   if (!hasUserHistory(history)) {
     return getTrendingFallback(upcoming);
@@ -85,7 +93,8 @@ export function getPickedForYou(
 
   scored.sort((a, b) => {
     if (a.isViewed !== b.isViewed) return a.isViewed ? 1 : -1;
-    return b.score - a.score;
+    if (b.score !== a.score) return b.score - a.score;
+    return comparePublicEventDates(a.event, b.event);
   });
 
   return scored.slice(0, PICKED_LIMIT).map((s) => s.event);
@@ -94,7 +103,7 @@ export function getPickedForYou(
 export function getTrendingFallback(events: Event[]): Event[] {
   const trending = events.filter((e) => e.trending);
   const pool = trending.length >= PICKED_LIMIT ? trending : events;
-  return pool.slice(0, PICKED_LIMIT);
+  return sortPublicEvents(pool).slice(0, PICKED_LIMIT);
 }
 
 export function isPersonalizedPicks(history: UserHistory): boolean {
@@ -106,7 +115,7 @@ export function pickSurpriseEvent(
   history: UserHistory,
   today = getKrakowTodayISO(),
 ): Event | null {
-  const upcoming = filterUpcomingEvents(events, today);
+  const upcoming = sortPublicEvents(filterUpcomingEvents(events, today));
   if (upcoming.length === 0) return null;
 
   if (!hasUserHistory(history)) {
@@ -119,7 +128,8 @@ export function pickSurpriseEvent(
     .map((item) => scoreEvent(item, history, events, today))
     .sort((a, b) => {
       if (a.isViewed !== b.isViewed) return a.isViewed ? 1 : -1;
-      return b.score - a.score;
+      if (b.score !== a.score) return b.score - a.score;
+      return comparePublicEventDates(a.event, b.event);
     });
 
   const candidates = scored.filter((s) => s.score > 0).slice(0, SURPRISE_POOL);

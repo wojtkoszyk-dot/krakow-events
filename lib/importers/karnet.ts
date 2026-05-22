@@ -1,37 +1,42 @@
 import { load } from "cheerio";
+import { fetchKarnetHtml } from "@/lib/importers/karnet-fetch";
+import {
+  parseKarnetDetailPage,
+  parseKarnetListingFallback,
+  resolveKarnetUrl,
+} from "@/lib/importers/karnet-detail";
+import { parseKarnetDateText } from "@/lib/importers/karnet-dates";
+import { logKarnetParse } from "@/lib/importers/karnet-debug";
+import { scoreKarnetImport } from "@/lib/importers/karnet-quality";
+import {
+  KARNET_EVENTS_URL,
+  KARNET_SOURCE_NAME,
+  type KarnetImportedItem,
+  type KarnetListingEntry,
+} from "@/lib/importers/karnet-types";
 
-export const KARNET_SOURCE_NAME = "Karnet Krakow Culture" as const;
-export const KARNET_BASE_URL = "https://karnet.krakowculture.pl";
-export const KARNET_EVENTS_URL = `${KARNET_BASE_URL}/wydarzenia`;
-
-export type KarnetImportedItem = {
-  title: string;
-  sourceUrl: string;
-  rawText: string;
-  sourceName: typeof KARNET_SOURCE_NAME;
-};
-
-function resolveKarnetUrl(href: string): string {
-  if (href.startsWith("http://") || href.startsWith("https://")) {
-    return href;
-  }
-  return `${KARNET_BASE_URL}${href.startsWith("/") ? href : `/${href}`}`;
-}
+export {
+  KARNET_BASE_URL,
+  KARNET_EVENTS_URL,
+  KARNET_SOURCE_NAME,
+  type KarnetImportedItem,
+  type KarnetListingEntry,
+} from "@/lib/importers/karnet-types";
 
 function normalizeText(text: string): string {
   return text.replace(/\s+/g, " ").trim();
 }
 
-/** Parse event cards from Karnet listing HTML. */
-export function parseKarnetEventsHtml(
+/** Step 1 — parse listing page and collect event detail URLs. */
+export function extractKarnetListingEntries(
   html: string,
   limit = 10,
-): KarnetImportedItem[] {
+): KarnetListingEntry[] {
   const $ = load(html);
-  const items: KarnetImportedItem[] = [];
+  const entries: KarnetListingEntry[] = [];
 
   $(".event-list .event-item").each((_, element) => {
-    if (items.length >= limit) {
+    if (entries.length >= limit) {
       return false;
     }
 
@@ -45,24 +50,108 @@ export function parseKarnetEventsHtml(
       return;
     }
 
-    const parts: string[] = [];
     const eventType = normalizeText($item.find(".event-type").first().text());
     const description = normalizeText($item.find("p.event-text").first().text());
     const location = normalizeText($item.find("p.event-location").first().text());
-    const date = normalizeText($item.find("a.event-date span").first().text());
+    const dateHint = normalizeText($item.find("a.event-date span").first().text());
 
-    if (eventType) parts.push(eventType);
-    if (description) parts.push(description);
-    if (location) parts.push(location);
-    if (date) parts.push(date);
+    const listingHint = [eventType, description, location, dateHint]
+      .filter(Boolean)
+      .join(" | ");
 
-    items.push({
+    entries.push({
       title,
       sourceUrl: resolveKarnetUrl(href),
-      rawText: parts.join(" | "),
-      sourceName: KARNET_SOURCE_NAME,
+      listingHint,
     });
   });
 
+  return entries;
+}
+
+/** Fetch listing + each detail page; returns richly parsed events. */
+export async function importKarnetEvents(
+  limit = 10,
+): Promise<KarnetImportedItem[]> {
+  const listingHtml = await fetchKarnetHtml(KARNET_EVENTS_URL);
+  const entries = extractKarnetListingEntries(listingHtml, limit);
+  logKarnetParse("listing:done", { count: entries.length, urls: entries.map((e) => e.sourceUrl) });
+  const items: KarnetImportedItem[] = [];
+
+  for (const entry of entries) {
+    try {
+      const detailHtml = await fetchKarnetHtml(entry.sourceUrl);
+      const parsed = parseKarnetDetailPage(
+        detailHtml,
+        entry.sourceUrl,
+        entry.listingHint,
+      );
+
+      if (parsed) {
+        const scored = {
+          ...parsed,
+          qualityScore: scoreKarnetImport(parsed),
+        };
+        logKarnetParse("import:scored", {
+          sourceUrl: entry.sourceUrl,
+          qualityScore: scored.qualityScore,
+          category: scored.category,
+          tagCount: scored.tags.length,
+        });
+        items.push(scored);
+        continue;
+      }
+    } catch (err) {
+      console.warn(
+        "[karnet] detail fetch failed, using listing fallback:",
+        entry.sourceUrl,
+        err,
+      );
+    }
+
+    const fallback = parseKarnetListingFallback(
+      entry.title,
+      entry.sourceUrl,
+      entry.listingHint,
+    );
+    items.push({
+      ...fallback,
+      qualityScore: scoreKarnetImport(fallback),
+    });
+  }
+
   return items;
+}
+
+/** @deprecated Listing-only parse. Prefer `importKarnetEvents`. */
+export function parseKarnetEventsHtml(
+  html: string,
+  limit = 10,
+): KarnetImportedItem[] {
+  return extractKarnetListingEntries(html, limit).map((entry) => {
+    const dates = parseKarnetDateText(entry.listingHint);
+    const item: KarnetImportedItem = {
+      title: entry.title,
+      sourceUrl: entry.sourceUrl,
+      sourceName: KARNET_SOURCE_NAME,
+      description: entry.listingHint,
+      venue: null,
+      district: "Kraków",
+      address: null,
+      startDate: dates.startDate,
+      endDate: dates.endDate,
+      time: dates.time,
+      imageUrl: null,
+      category: "Other",
+      tags: [],
+      price: null,
+      rawText: entry.listingHint,
+      karnetLabels: [],
+      listingHint: entry.listingHint,
+      isRecurring: false,
+      qualityScore: 0,
+    };
+    item.qualityScore = scoreKarnetImport(item);
+    return item;
+  });
 }

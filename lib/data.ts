@@ -3,6 +3,7 @@ import {
   formatDisplayDate,
   getKrakowTodayISO,
 } from "@/lib/dates";
+import { assignEventDescriptions } from "@/lib/event-descriptions";
 import type { EventCategory } from "@/lib/taxonomy";
 
 export type { EventCategory };
@@ -19,14 +20,21 @@ export type Event = {
   category: EventCategory;
   tags: string[];
   price: string;
-  description: string;
+  /** Original / Polish copy (imports, PL UI). */
+  descriptionPl: string;
+  /** English copy for EN UI; falls back to PL when missing. */
+  descriptionEn: string;
   imageUrl: string;
   trending?: boolean;
+  /** Set when published from an import source (e.g. Karnet). */
+  sourceName?: string;
+  sourceUrl?: string;
 };
 
-type EventSeed = Omit<Event, "date" | "startsOn"> & {
+type EventSeed = Omit<Event, "date" | "startsOn" | "descriptionPl" | "descriptionEn"> & {
   dayOffset: number;
   spanDays?: number;
+  description: string;
 };
 
 function buildEvents(): Event[] {
@@ -393,9 +401,15 @@ function buildEvents(): Event[] {
     const endsOn = seed.spanDays
       ? addDaysISO(startsOn, seed.spanDays)
       : undefined;
-    const { dayOffset: _d, spanDays: _s, ...rest } = seed;
+    const { dayOffset: _d, spanDays: _s, description, ...rest } = seed;
+    const { descriptionPl, descriptionEn } = assignEventDescriptions(description, {
+      title: rest.title,
+      venue: rest.venue,
+    });
     return {
       ...rest,
+      descriptionPl,
+      descriptionEn,
       startsOn,
       endsOn,
       date: endsOn
@@ -405,6 +419,12 @@ function buildEvents(): Event[] {
   });
 }
 
-export function getEvents(): Event[] {
+/** Local seed data — used when Supabase has no rows or is unreachable. */
+export function getMockEvents(): Event[] {
   return buildEvents();
+}
+
+/** Sync access to mock seeds (client utilities). Prefer `loadPublicEvents()` on the server. */
+export function getEvents(): Event[] {
+  return getMockEvents();
 }

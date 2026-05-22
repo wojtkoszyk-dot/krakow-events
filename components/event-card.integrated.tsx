@@ -3,6 +3,13 @@
 import Image from "next/image";
 import { useLocale } from "@/hooks/use-locale";
 import type { Event } from "@/lib/data";
+import {
+  getDisplayPrice,
+  getDisplayVenue,
+  hasDisplayTime,
+  isPlaceholderPriceDisplay,
+} from "@/lib/event-display";
+import { EventSourceAttribution } from "@/components/event-source-attribution";
 import { getCategoryLabel } from "@/lib/i18n/translations";
 
 type EventCardProps = {
@@ -24,6 +31,13 @@ export function EventCard({
   const categoryLabel = getCategoryLabel(event.category, locale);
   const isFeatured = variant === "featured" || variant === "picked";
   const isPicked = variant === "picked";
+  const venue = getDisplayVenue(event.venue, t("modal.venueAnnounced"));
+  const priceLabel = getDisplayPrice(event.price, t("modal.seeDetails"));
+  const priceIsPlaceholder = isPlaceholderPriceDisplay(
+    event.price,
+    t("modal.seeDetails"),
+  );
+  const showTime = hasDisplayTime(event.time);
 
   if (isFeatured && isPicked) {
     return (
@@ -43,9 +57,11 @@ export function EventCard({
                 <span className="inline-flex max-w-[5.5rem] truncate rounded-full border border-white/12 bg-black/50 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.12em] text-white/90 backdrop-blur-md">
                   {categoryLabel}
                 </span>
-                <span className="inline-flex shrink-0 rounded-full bg-white/95 px-1.5 py-0.5 text-[8px] font-bold tabular-nums text-black">
-                  {event.time}
-                </span>
+                {showTime ? (
+                  <span className="inline-flex shrink-0 rounded-full bg-white/95 px-1.5 py-0.5 text-[8px] font-bold tabular-nums text-black">
+                    {event.time}
+                  </span>
+                ) : null}
               </div>
               <SaveButton
                 isSaved={isSaved}
@@ -62,14 +78,24 @@ export function EventCard({
               <h3 className="line-clamp-2 text-[13px] font-semibold leading-[1.2] tracking-[-0.02em] text-white">
                 {event.title}
               </h3>
-              <p className="truncate text-[11px] font-medium text-white/48">
-                {event.venue}
+              <p
+                className={`truncate text-[11px] font-medium ${
+                  venue.isAnnounced ? "text-white/36" : "text-white/48"
+                }`}
+              >
+                {venue.text}
               </p>
               <p className="text-[9px] font-medium uppercase tracking-[0.1em] text-white/32">
                 {event.district}
                 <span className="mx-1 text-white/18">·</span>
-                <span className="text-emerald-400/80 normal-case tracking-normal">
-                  {event.price}
+                <span
+                  className={`normal-case tracking-normal ${
+                    priceIsPlaceholder
+                      ? "text-white/42"
+                      : "text-emerald-400/80"
+                  }`}
+                >
+                  {priceLabel}
                 </span>
               </p>
             </div>
@@ -95,7 +121,13 @@ export function EventCard({
                 <h3 className="text-lg font-bold leading-tight tracking-tight text-white">
                   {event.title}
                 </h3>
-                <p className="mt-1 truncate text-sm text-white/70">{event.venue}</p>
+                <p
+                  className={`mt-1 truncate text-sm ${
+                    venue.isAnnounced ? "text-white/45" : "text-white/70"
+                  }`}
+                >
+                  {venue.text}
+                </p>
               </div>
             </div>
           </button>
@@ -114,9 +146,11 @@ export function EventCard({
         <div className="relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-[0.875rem] bg-zinc-900 ring-1 ring-white/[0.08] sm:h-[92px] sm:w-[92px] lg:h-[100px] lg:w-[112px]">
           <EventImage event={event} fill sizes="(max-width: 1024px) 92px, 112px" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
-          <time className="absolute bottom-1.5 left-1.5 rounded-md bg-white/95 px-1.5 py-0.5 text-[9px] font-bold tabular-nums text-black shadow-sm">
-            {event.time}
-          </time>
+          {showTime ? (
+            <time className="absolute bottom-1.5 left-1.5 rounded-md bg-white/95 px-1.5 py-0.5 text-[9px] font-bold tabular-nums text-black shadow-sm">
+              {event.time}
+            </time>
+          ) : null}
         </div>
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 py-0.5">
           <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/40">
@@ -127,14 +161,34 @@ export function EventCard({
           <h3 className="line-clamp-2 text-[15px] font-semibold leading-[1.25] tracking-[-0.02em] text-white">
             {event.title}
           </h3>
-          <p className="truncate text-[13px] font-medium leading-snug text-white/52">
-            {event.venue}
+          <p
+            className={`truncate text-[13px] font-medium leading-snug ${
+              venue.isAnnounced ? "text-white/38" : "text-white/52"
+            }`}
+          >
+            {venue.text}
           </p>
           <p className="mt-0.5 flex items-center gap-2 text-[11px] leading-none">
-            <span className="font-medium text-white/42">{event.date}</span>
+            <span className="font-medium text-white/42">
+              {event.date || t("modal.dateTba")}
+            </span>
             <span className="text-white/18">·</span>
-            <span className="font-semibold text-emerald-400/85">{event.price}</span>
+            <span
+              className={
+                priceIsPlaceholder
+                  ? "font-medium text-white/42"
+                  : "font-semibold text-emerald-400/85"
+              }
+            >
+              {priceLabel}
+            </span>
           </p>
+          <EventSourceAttribution
+            event={event}
+            sourceLabel={t("modal.source")}
+            viewOriginalLabel={t("modal.viewOriginal")}
+            variant="card"
+          />
         </div>
       </button>
       <SaveButton

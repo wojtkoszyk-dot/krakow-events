@@ -10,7 +10,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SurpriseMeCta } from "@/components/surprise-me-cta";
 import { AppLocaleShell, useLocale } from "@/hooks/use-locale";
 import { useUserHistory } from "@/hooks/use-user-history.integrated";
-import { getEvents, type Event } from "@/lib/data";
+import type { Event } from "@/lib/data";
 import { getCategoryLabel } from "@/lib/i18n/translations";
 import {
   CATEGORY_FILTER_IDS,
@@ -31,7 +31,11 @@ import {
   pickSurpriseEvent,
 } from "@/lib/recommendations";
 
-function EventsAppInner() {
+type EventsAppInnerProps = {
+  initialEvents: Event[];
+};
+
+function EventsAppInner({ initialEvents }: EventsAppInnerProps) {
   const { locale, t } = useLocale();
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -51,7 +55,7 @@ function EventsAppInner() {
     isSaved,
   } = useUserHistory();
 
-  const allEvents = useMemo(() => getEvents(), []);
+  const allEvents = useMemo(() => initialEvents, [initialEvents]);
   const refined = hasRefinementFilters(filters);
 
   const feedEvents = useMemo(
@@ -411,10 +415,14 @@ function EventsAppInner() {
   );
 }
 
-export function EventsApp() {
+type EventsAppProps = {
+  initialEvents: Event[];
+};
+
+export function EventsApp({ initialEvents }: EventsAppProps) {
   return (
     <AppLocaleShell>
-      <EventsAppInner />
+      <EventsAppInner initialEvents={initialEvents} />
     </AppLocaleShell>
   );
 }

@@ -1,5 +1,6 @@
 import type { Event } from "@/lib/data";
 import {
+  comparePublicEventDates,
   filterUpcomingEvents,
   getKrakowTodayISO,
   getTomorrowISO,
@@ -10,7 +11,7 @@ import {
 
 function sortByDateTime(events: Event[]): Event[] {
   return [...events].sort((a, b) => {
-    const dateCmp = a.startsOn.localeCompare(b.startsOn);
+    const dateCmp = comparePublicEventDates(a, b);
     if (dateCmp !== 0) return dateCmp;
     return a.time.localeCompare(b.time);
   });

@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { formatDisplayDate } from "@/lib/dates";
+import { mapDescriptionsFromDb } from "@/lib/event-descriptions";
 import { getSupabaseKey, getSupabaseUrl } from "@/utils/supabase/env";
 import type { Event } from "@/lib/data";
 import type { EventCategory } from "@/lib/taxonomy";
@@ -20,6 +21,8 @@ export type EventRow = {
   tags: string[] | null;
   price: string;
   description: string;
+  description_pl?: string | null;
+  description_en?: string | null;
   image_url: string;
   trending: boolean;
   created_at: string;
@@ -63,6 +66,8 @@ function rowToEvent(row: EventRow): Event {
   const endsOn = row.ends_on ?? undefined;
   const category = isEventCategory(row.category) ? row.category : "other";
 
+  const { descriptionPl, descriptionEn } = mapDescriptionsFromDb(row);
+
   return {
     id: row.id,
     title: row.title,
@@ -77,7 +82,8 @@ function rowToEvent(row: EventRow): Event {
     category: category as EventCategory,
     tags: row.tags ?? [],
     price: row.price,
-    description: row.description,
+    descriptionPl,
+    descriptionEn,
     imageUrl: row.image_url,
     trending: row.trending ?? false,
   };
@@ -97,6 +103,10 @@ function rowToCandidate(row: EventCandidateRow): EventCandidate {
 }
 
 function eventInsertFromCandidate(row: EventCandidateRow) {
+  const descriptionPl =
+    row.description_pl?.trim() || row.description?.trim() || "";
+  const descriptionEn = row.description_en?.trim() || descriptionPl;
+
   return {
     title: row.title,
     starts_on: row.starts_on,
@@ -107,22 +117,18 @@ function eventInsertFromCandidate(row: EventCandidateRow) {
     category: row.category,
     tags: row.tags ?? [],
     price: row.price,
-    description: row.description,
+    description: descriptionPl,
+    description_pl: descriptionPl,
+    description_en: descriptionEn,
     image_url: row.image_url,
     trending: row.trending ?? false,
   };
 }
 
-/** Public feed — approved events from `events` table. */
+/** Public feed — approved events from `events` table (server pages: prefer `loadPublicEvents`). */
 export async function getApprovedEvents(): Promise<Event[]> {
-  const { data, error } = await createSupabaseClient()
-    .from("events")
-    .select("*")
-    .order("starts_on", { ascending: true })
-    .order("time", { ascending: true });
-
-  if (error) throw error;
-  return (data as EventRow[]).map(rowToEvent);
+  const { loadPublicEvents } = await import("@/lib/events-feed");
+  return loadPublicEvents();
 }
 
 /** Admin queue — pending candidates awaiting review. */

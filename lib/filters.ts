@@ -8,6 +8,7 @@ import {
   isEventInDateRange,
   isEventOnDate,
   isEventOnWeekend,
+  sortPublicEvents,
 } from "@/lib/dates";
 import { matchesSearch } from "@/lib/search";
 import type { CategoryFilterId, EventCategory } from "@/lib/taxonomy";
@@ -186,15 +187,12 @@ export function filterEvents(
 ): Event[] {
   const upcoming = filterUpcomingEvents(events, today);
 
-  return upcoming
-    .filter((event) => matchesSearch(event, state.search))
-    .filter((event) => matchesDatePreset(event, state, today))
-    .filter((event) => matchesCategoryFilter(event, state.category))
-    .filter((event) => (state.free ? isFreeEvent(event) : true))
-    .sort((a, b) => {
-      const dateCmp = a.startsOn.localeCompare(b.startsOn);
-      if (dateCmp !== 0) return dateCmp;
-      return a.time.localeCompare(b.time);
-    });
+  return sortPublicEvents(
+    upcoming
+      .filter((event) => matchesSearch(event, state.search))
+      .filter((event) => matchesDatePreset(event, state, today))
+      .filter((event) => matchesCategoryFilter(event, state.category))
+      .filter((event) => (state.free ? isFreeEvent(event) : true)),
+  );
 }
 

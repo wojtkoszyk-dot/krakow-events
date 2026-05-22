@@ -4,6 +4,14 @@ import Image from "next/image";
 import { useEffect } from "react";
 import { useLocale } from "@/hooks/use-locale";
 import type { Event } from "@/lib/data";
+import {
+  getDisplayPrice,
+  getDisplayVenue,
+  hasDisplayTime,
+  isPlaceholderPriceDisplay,
+} from "@/lib/event-display";
+import { EventSourceAttribution } from "@/components/event-source-attribution";
+import { getEventDescription } from "@/lib/event-descriptions";
 import { getCategoryLabel } from "@/lib/i18n/translations";
 
 type EventModalProps = {
@@ -40,6 +48,17 @@ export function EventModal({
   if (!event) return null;
 
   const categoryLabel = getCategoryLabel(event.category, locale);
+  const venue = getDisplayVenue(event.venue, t("modal.venueAnnounced"));
+  const priceLabel = getDisplayPrice(event.price, t("modal.seeDetails"));
+  const priceIsPlaceholder = isPlaceholderPriceDisplay(
+    event.price,
+    t("modal.seeDetails"),
+  );
+  const scheduleParts = [
+    event.date || t("modal.dateTba"),
+    hasDisplayTime(event.time) ? event.time : null,
+  ].filter(Boolean);
+  const description = getEventDescription(event, locale);
 
   return (
     <div
@@ -90,37 +109,34 @@ export function EventModal({
           >
             {event.title}
           </h2>
-          <p className="mt-2 text-sm text-white/50">
-            {event.date} · {event.time}
-          </p>
+          <p className="mt-2 text-sm text-white/50">{scheduleParts.join(" · ")}</p>
 
           <dl className="mt-5 grid gap-3 text-sm">
-            <DetailRow label={t("modal.venue")} value={event.venue} />
+            <DetailRow
+              label={t("modal.venue")}
+              value={venue.text}
+              muted={venue.isAnnounced}
+            />
             <DetailRow label={t("modal.district")} value={event.district} />
-            <DetailRow label={t("modal.price")} value={event.price} />
+            <DetailRow
+              label={t("modal.price")}
+              value={priceLabel}
+              muted={priceIsPlaceholder}
+            />
           </dl>
 
-          {event.tags.length > 0 ? (
-            <div className="mt-4">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/40">
-                {t("modal.tags")}
-              </p>
-              <ul className="mt-2 flex flex-wrap gap-1.5">
-                {event.tags.map((tag) => (
-                  <li
-                    key={tag}
-                    className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs text-white/70"
-                  >
-                    {tag}
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {description ? (
+            <p className="mt-5 text-sm leading-relaxed text-white/65">
+              {description}
+            </p>
           ) : null}
 
-          <p className="mt-5 text-sm leading-relaxed text-white/65">
-            {event.description}
-          </p>
+          <EventSourceAttribution
+            event={event}
+            sourceLabel={t("modal.source")}
+            viewOriginalLabel={t("modal.viewOriginal")}
+            variant="modal"
+          />
 
           <button
             type="button"
@@ -139,11 +155,19 @@ export function EventModal({
   );
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+function DetailRow({
+  label,
+  value,
+  muted = false,
+}: {
+  label: string;
+  value: string;
+  muted?: boolean;
+}) {
   return (
     <div className="flex gap-4 border-b border-white/[0.06] pb-3 last:border-0">
       <dt className="w-20 shrink-0 text-white/40">{label}</dt>
-      <dd className="text-white/90">{value}</dd>
+      <dd className={muted ? "text-white/45" : "text-white/90"}>{value}</dd>
     </div>
   );
 }
